@@ -1,78 +1,101 @@
 # Sistema Acadêmico — UNEB Campus II
 
-Protótipo React de autenticação e layout principal para um sistema acadêmico da UNEB Campus II, em Alagoinhas.
+Projeto React e TypeScript que reúne a interface do sistema acadêmico com a arquitetura base de autenticação, roteamento e controle de acesso por perfil.
 
-## Requisitos atendidos
+## O que foi implementado
 
-### Layout padrão responsivo
+### Setup e arquitetura
 
-- header superior com identificação do usuário e notificações;
-- sidebar de navegação com estado ativo e botão de saída;
-- rodapé institucional;
-- menu lateral convertido em drawer no celular;
-- navegação por teclado, foco visível, link para pular ao conteúdo, rótulos ARIA e suporte a redução de movimento.
+- React com TypeScript e Vite;
+- organização por componentes, contexto, hooks, páginas, rotas, serviços, schemas e tipos;
+- ESLint e EditorConfig para padronização do código;
+- configuração compatível com hospedagem no GitHub Pages usando `HashRouter` e `base: './'`.
 
-### Tela de login
+### Autenticação global
 
-- formulário de credenciais;
-- segunda etapa visual para código MFA de seis dígitos;
+- `AuthContext` armazena usuário, token JWT, estado de carregamento e desafio MFA;
+- restauração da sessão pelo `sessionStorage` ou `localStorage`;
+- funções `login()`, `verifyMFA()`, `cancelMFA()` e `logout()`;
+- login de demonstração com MFA e mensagens de erro;
+- cliente Axios em `src/services/api.ts`;
+- interceptor que envia `Authorization: Bearer <token>`;
+- tratamento de respostas `401` e `403`, limpando a sessão e retornando ao login.
+
+### Roteamento e autorização
+
+- rotas centralizadas em `src/routes/AppRoutes.tsx`;
+- `ProtectedRoute` verifica login, MFA e papéis permitidos;
+- perfis disponíveis: `ALUNO`, `PROFESSOR`, `SECRETARIA` e `ADMIN`;
+- painel do aluno protegido para `ALUNO`;
+- gestão da secretaria protegida para `SECRETARIA` e `ADMIN`;
+- página de acesso não autorizado.
+
+### Interface
+
+- tela de login responsiva;
 - validação com React Hook Form, Zod e `zodResolver`;
-- mensagens de erro por campo e erros de autenticação;
-- botões desabilitados e indicadores de loading durante as requisições simuladas;
-- opção para mostrar ou ocultar a senha.
+- campo para código MFA;
+- estados de carregamento;
+- layout principal com cabeçalho, menu lateral e rodapé;
+- menu móvel e recursos básicos de acessibilidade.
 
-### Conexão da interface
+## Dados para demonstração
 
-- `login()` e `verifyMfa()` implementados no `AuthContext`;
-- rota protegida por `ProtectedRoute`;
-- redirecionamento automático para a rota principal após a autenticação;
-- sessão mantida com `sessionStorage` ou `localStorage` quando “lembrar acesso” é marcado;
-- `logout()` remove a sessão e retorna o usuário ao login.
+Todos os perfis usam a senha `123456` e o código MFA `123456`.
 
-## Dados de demonstração
+| Perfil | E-mail |
+| --- | --- |
+| Aluno | `aluno@uneb.br` |
+| Secretaria | `secretaria@uneb.br` |
+| Administrador | `admin@uneb.br` |
 
-| Campo | Valor |
-|---|---|
-| E-mail | `aluno@uneb.br` |
-| Senha | `123456` |
-| Código MFA | `123456` |
+## Como executar
 
-## Executar o projeto
-
-É necessário ter o Node.js instalado.
+É necessário instalar o Node.js. Dentro da pasta do projeto, execute:
 
 ```bash
 npm install
 npm run dev
 ```
 
-Abra no navegador o endereço informado pelo Vite.
+Depois, abra o endereço informado no terminal, normalmente `http://localhost:5173`.
 
-## Verificações
+## Comandos de verificação
 
 ```bash
+npm run typecheck
 npm run lint
 npm test
 npm run build
+```
+
+## Configuração da API
+
+Copie `.env.example` para `.env` e altere o endereço quando existir uma API real:
+
+```env
+VITE_API_URL=http://localhost:3000/api
 ```
 
 ## Estrutura principal
 
 ```text
 src/
-├── components/
-│   ├── layout/       # Header, Sidebar, Footer e proteção de rota
-│   └── ui/           # Ícones e indicador de loading
-├── contexts/         # AuthContext, login, MFA e logout
-├── pages/            # Login, dashboard e páginas internas
-├── schemas/          # Schemas Zod
-├── styles/           # Layout responsivo e acessibilidade
-├── App.jsx           # Rotas da aplicação
-└── main.jsx          # Providers e inicialização
+├── components/       # Layout, ícones e feedback de carregamento
+├── context/          # AuthContext e estado global
+├── hooks/            # Hook useAuth
+├── pages/            # Login, MFA, painéis e acesso negado
+├── routes/           # Rotas, proteção e destino por papel
+├── schemas/          # Validações Zod
+├── services/         # Cliente HTTP e interceptadores
+├── test/             # Configuração dos testes
+├── types/            # Tipos de autenticação
+├── App.tsx
+└── main.tsx
 ```
 
-## Observação sobre a autenticação
+## Importante
 
-O fluxo atual é uma demonstração front-end. A função `login()` simula uma requisição e usa credenciais fixas para permitir a avaliação da interface. Em produção, substitua essa parte por chamadas HTTPS à API; senha e código MFA devem ser validados exclusivamente no servidor.
+O login, o JWT e o MFA são simulados no navegador para fins acadêmicos. Ainda não existe banco de dados ou servidor. Em produção, senha e código MFA devem ser validados por uma API segura.
 
 > Projeto educacional sem vínculo com o portal oficial da UNEB.
