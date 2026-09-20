@@ -34,7 +34,7 @@ jobs:
           cache: npm
 
       - name: Instalar dependências
-        run: npm ci
+        run: npm install
 
       - name: Gerar versão de produção
         run: npm run build
