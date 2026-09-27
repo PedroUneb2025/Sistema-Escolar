@@ -6,7 +6,7 @@ const AUTH_STORAGE_KEYS = {
 } as const;
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api',
+  baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:8000',
 });
 
 api.interceptors.request.use((config) => {
@@ -20,6 +20,43 @@ api.interceptors.request.use((config) => {
 
   return config;
 });
+
+interface LoginResponse {
+  access_token: string;
+  token_type: string;
+}
+
+export interface MeResponse {
+  id_usuario: number;
+  email: string;
+  status: string;
+  perfis: string[];
+}
+
+/**
+ * POST /auth/login — contrato do backend (backend/README.md, PR #1):
+ * exige application/x-www-form-urlencoded com os campos `username` e `password`
+ * (nome fixo de `username` porque o backend usa OAuth2PasswordRequestForm, mesmo
+ * que o valor enviado seja o e-mail). Retorna apenas o token; os dados do
+ * usuário (incluindo `perfis`) vêm de GET /auth/me.
+ */
+export async function loginRequest(email: string, password: string) {
+  const body = new URLSearchParams();
+  body.set('username', email);
+  body.set('password', password);
+
+  const { data } = await api.post<LoginResponse>('/auth/login', body, {
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  });
+
+  return data;
+}
+
+/** GET /auth/me — retorna { id_usuario, email, status, perfis: [...] }. */
+export async function fetchCurrentUser() {
+  const { data } = await api.get<MeResponse>('/auth/me');
+  return data;
+}
 
 api.interceptors.response.use(
   (response) => response,

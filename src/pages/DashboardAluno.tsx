@@ -9,18 +9,17 @@ const services = [
 
 export function DashboardAluno() {
   const { user } = useAuth();
+  // GET /auth/me ainda não devolve nome nem curso — usamos o e-mail como
+  // retrato provisório (ver observações da revisão do PR feature/backend-setup).
+  const firstName = user?.email.split('@')[0] ?? '';
 
   return (
     <div className="dashboard">
       <section className="welcome-banner">
         <div>
           <span className="section-label">Período 2026.2</span>
-          <h1>Olá, {user?.nome.split(' ')[0]}!</h1>
+          <h1>Olá, {firstName}!</h1>
           <p>Acompanhe abaixo um resumo da sua vida acadêmica.</p>
-        </div>
-        <div className="welcome-banner__badge">
-          <Icon name="book" size={28} />
-          <span><small>Curso</small><strong>{user?.curso}</strong></span>
         </div>
       </section>
 

@@ -25,17 +25,34 @@ const staffNavigation: NavigationItem[] = [
   { to: '/secretaria/gestao', label: 'Configurações', icon: 'settings' },
 ];
 
-const roleLabels = {
-  ALUNO: 'Estudante',
-  PROFESSOR: 'Professor',
-  SECRETARIA: 'Secretaria',
-  ADMIN: 'Administrador',
+const roleLabels: Record<string, string> = {
+  admin: 'Administrador',
+  secretaria: 'Secretaria',
+  coordenacao: 'Coordenação',
+  professor: 'Professor',
+  aluno: 'Estudante',
+  financeiro: 'Financeiro',
 };
+
+// GET /auth/me hoje só devolve { id_usuario, email, status, perfis }, sem nome
+// de exibição — usamos o e-mail como retrato provisório até o backend expor
+// um campo de nome (ver observações da revisão do PR feature/backend-setup).
+function getDisplayName(email: string | undefined) {
+  if (!email) return '';
+  const [handle] = email.split('@');
+  return handle.charAt(0).toUpperCase() + handle.slice(1);
+}
+
+function getPrimaryRoleLabel(perfis: string[] | undefined) {
+  const perfil = perfis?.[0];
+  return perfil ? (roleLabels[perfil] ?? perfil) : '';
+}
 
 export function CoreLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { logout, user } = useAuth();
-  const navigation = user?.role === 'ALUNO' ? studentNavigation : staffNavigation;
+  const navigation = user?.perfis.includes('aluno') ? studentNavigation : staffNavigation;
+  const displayName = getDisplayName(user?.email);
 
   useEffect(() => {
     document.body.style.overflow = isSidebarOpen ? 'hidden' : '';
@@ -93,8 +110,8 @@ export function CoreLayout() {
 
         <div className="sidebar__footer">
           <div className="sidebar-profile">
-            <span className="sidebar-profile__avatar" aria-hidden="true">{user?.nome.charAt(0)}</span>
-            <div><strong>{user?.nome}</strong><small>{user?.curso}</small></div>
+            <span className="sidebar-profile__avatar" aria-hidden="true">{displayName.charAt(0)}</span>
+            <div><strong>{displayName}</strong><small>{getPrimaryRoleLabel(user?.perfis)}</small></div>
           </div>
           <button className="logout-button" type="button" onClick={logout}>
             <Icon name="logout" /><span>Sair da conta</span>
@@ -131,9 +148,9 @@ export function CoreLayout() {
               <Icon name="bell" /><span aria-hidden="true" />
             </button>
             <div className="user-summary">
-              <span className="user-summary__avatar" aria-hidden="true">{user?.nome.charAt(0)}</span>
+              <span className="user-summary__avatar" aria-hidden="true">{displayName.charAt(0)}</span>
               <span className="user-summary__text">
-                <strong>{user?.nome}</strong><small>{user ? roleLabels[user.role] : ''}</small>
+                <strong>{displayName}</strong><small>{getPrimaryRoleLabel(user?.perfis)}</small>
               </span>
             </div>
           </div>

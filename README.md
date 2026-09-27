@@ -13,19 +13,27 @@ Projeto React e TypeScript que reúne a interface do sistema acadêmico com a ar
 
 ### Autenticação global
 
-- `AuthContext` armazena usuário, token JWT, estado de carregamento e desafio MFA;
+- `AuthContext` armazena usuário, token JWT e estado de carregamento;
+- login integrado com a API real (`POST /auth/login`, contrato descrito abaixo);
 - restauração da sessão pelo `sessionStorage` ou `localStorage`;
-- funções `login()`, `verifyMFA()`, `cancelMFA()` e `logout()`;
-- login de demonstração com MFA e mensagens de erro;
+- funções `login()` e `logout()`;
 - cliente Axios em `src/services/api.ts`;
 - interceptor que envia `Authorization: Bearer <token>`;
 - tratamento de respostas `401` e `403`, limpando a sessão e retornando ao login.
+
+> A etapa de MFA (`/mfa-verification`) foi removida por enquanto: o backend
+> atual (PR `feature/backend-setup`) não implementa verificação em duas
+> etapas — `POST /auth/login` já devolve o token final. O componente antigo
+> ainda pode ser recuperado do histórico do git se o backend vier a suportar
+> MFA numa sprint futura.
 
 ### Roteamento e autorização
 
 - rotas centralizadas em `src/routes/AppRoutes.tsx`;
 - `ProtectedRoute` verifica login, MFA e papéis permitidos;
-- perfis disponíveis: `ALUNO`, `PROFESSOR`, `SECRETARIA` e `ADMIN`;
+- perfis disponíveis (seed do backend): `admin`, `secretaria`, `coordenacao`,
+  `professor`, `aluno` e `financeiro` — um usuário pode ter mais de um perfil
+  (`user.perfis: string[]`);
 - painel do aluno protegido para `ALUNO`;
 - gestão da secretaria protegida para `SECRETARIA` e `ADMIN`;
 - página de acesso não autorizado.
@@ -38,16 +46,6 @@ Projeto React e TypeScript que reúne a interface do sistema acadêmico com a ar
 - estados de carregamento;
 - layout principal com cabeçalho, menu lateral e rodapé;
 - menu móvel e recursos básicos de acessibilidade.
-
-## Dados para demonstração
-
-Todos os perfis usam a senha `123456` e o código MFA `123456`.
-
-| Perfil | E-mail |
-| --- | --- |
-| Aluno | `aluno@uneb.br` |
-| Secretaria | `secretaria@uneb.br` |
-| Administrador | `admin@uneb.br` |
 
 ## Como executar
 

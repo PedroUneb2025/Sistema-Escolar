@@ -1,71 +1,21 @@
 import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import type {
-  AuthContextValue,
-  AuthState,
-  LoginCredentials,
-  MFAChallenge,
-  User,
-} from '../types/auth';
+import { fetchCurrentUser, loginRequest } from '../services/api';
+import type { AuthContextValue, AuthState, LoginCredentials, User } from '../types/auth';
 
 const AUTH_STORAGE_KEYS = {
   token: '@UNEB:token',
   user: '@UNEB:user',
 } as const;
 
-const MFA_CODE = '123456';
-const MFA_DURATION = 5 * 60 * 1000;
-
-interface DemoAccount {
-  password: string;
-  user: Omit<User, 'mfaVerified'>;
-}
-
-const DEMO_ACCOUNTS: Record<string, DemoAccount> = {
-  'aluno@uneb.br': {
-    password: '123456',
-    user: {
-      id: '20260001',
-      nome: 'Maria Estudante',
-      email: 'aluno@uneb.br',
-      role: 'ALUNO',
-      curso: 'Sistemas de Informação',
-    },
-  },
-  'secretaria@uneb.br': {
-    password: '123456',
-    user: {
-      id: 'SEC-001',
-      nome: 'Ana Secretaria',
-      email: 'secretaria@uneb.br',
-      role: 'SECRETARIA',
-      curso: 'Secretaria Acadêmica',
-    },
-  },
-  'admin@uneb.br': {
-    password: '123456',
-    user: {
-      id: 'ADM-001',
-      nome: 'Carlos Administrador',
-      email: 'admin@uneb.br',
-      role: 'ADMIN',
-      curso: 'Administração do sistema',
-    },
-  },
-};
-
 const initialAuthState: AuthState = {
   user: null,
   token: null,
-  mfaChallenge: null,
   isAuthenticated: false,
   isLoading: true,
 };
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
-
-const delay = (milliseconds: number) =>
-  new Promise<void>((resolve) => window.setTimeout(resolve, milliseconds));
 
 function restoreStoredUser(value: string | null): User | null {
   if (!value) return null;
@@ -108,7 +58,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setState({
         user: storedSession.user,
         token: storedSession.token,
-        mfaChallenge: null,
         isAuthenticated: true,
         isLoading: false,
       });
@@ -119,83 +68,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState({ ...initialAuthState, isLoading: false });
   }, []);
 
-  const login = useCallback(async ({ email, password }: LoginCredentials) => {
+  const login = useCallback(async ({ email, password, remember = false }: LoginCredentials) => {
     setState((current) => ({ ...current, isLoading: true }));
 
     try {
-      await delay(700);
-      const normalizedEmail = email.trim().toLowerCase();
-      const account = DEMO_ACCOUNTS[normalizedEmail];
+      // POST /auth/login (application/x-www-form-urlencoded) — devolve só o token.
+      const { access_token: token } = await loginRequest(email, password);
 
-      if (!account || account.password !== password) {
+      // Guarda o token antes de chamar /auth/me: o interceptor de api.ts lê o
+      // token do storage em cada requisição.
+      const storage = remember ? localStorage : sessionStorage;
+      clearStoredSession();
+      storage.setItem(AUTH_STORAGE_KEYS.token, token);
+
+      // GET /auth/me — é daqui que vem o array `perfis`.
+      const me = await fetchCurrentUser();
+      const user: User = {
+        id: String(me.id_usuario),
+        email: me.email,
+        status: me.status,
+        perfis: me.perfis as User['perfis'],
+      };
+
+      storage.setItem(AUTH_STORAGE_KEYS.user, JSON.stringify(user));
+
+      setState({ user, token, isAuthenticated: true, isLoading: false });
+      return user;
+    } catch (error) {
+      clearStoredSession();
+      setState((current) => ({ ...current, isLoading: false }));
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        (error as { response?: { status?: number } }).response?.status === 401
+      ) {
         throw new Error('E-mail ou senha incorretos. Confira os dados e tente novamente.');
       }
 
-      const pendingUser: User = { ...account.user, mfaVerified: false };
-      const challenge: MFAChallenge = {
-        user: pendingUser,
-        token: `demo-token-${pendingUser.role.toLowerCase()}`,
-        maskedDestination: normalizedEmail.replace(/^(.{2}).*(@.*)$/, '$1••••$2'),
-        expiresAt: Date.now() + MFA_DURATION,
-      };
-
-      setState({
-        user: null,
-        token: null,
-        mfaChallenge: challenge,
-        isAuthenticated: false,
-        isLoading: false,
-      });
-
-      return { requiresMFA: true as const };
-    } catch (error) {
-      setState((current) => ({ ...current, isLoading: false }));
-      throw error;
+      throw new Error('Não foi possível realizar o login. Tente novamente em instantes.');
     }
-  }, []);
-
-  const verifyMFA = useCallback(
-    async (code: string, remember = false) => {
-      const challenge = state.mfaChallenge;
-      setState((current) => ({ ...current, isLoading: true }));
-
-      try {
-        await delay(600);
-
-        if (!challenge || Date.now() > challenge.expiresAt) {
-          throw new Error('O código expirou. Volte ao login para solicitar um novo.');
-        }
-
-        if (code !== MFA_CODE) {
-          throw new Error('Código de verificação inválido.');
-        }
-
-        const verifiedUser: User = { ...challenge.user, mfaVerified: true };
-        const storage = remember ? localStorage : sessionStorage;
-
-        clearStoredSession();
-        storage.setItem(AUTH_STORAGE_KEYS.token, challenge.token);
-        storage.setItem(AUTH_STORAGE_KEYS.user, JSON.stringify(verifiedUser));
-
-        setState({
-          user: verifiedUser,
-          token: challenge.token,
-          mfaChallenge: null,
-          isAuthenticated: true,
-          isLoading: false,
-        });
-
-        return verifiedUser;
-      } catch (error) {
-        setState((current) => ({ ...current, isLoading: false }));
-        throw error;
-      }
-    },
-    [state.mfaChallenge],
-  );
-
-  const cancelMFA = useCallback(() => {
-    setState((current) => ({ ...current, mfaChallenge: null, isLoading: false }));
   }, []);
 
   const logout = useCallback(() => {
@@ -204,8 +117,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<AuthContextValue>(
-    () => ({ ...state, login, verifyMFA, cancelMFA, logout }),
-    [cancelMFA, login, logout, state, verifyMFA],
+    () => ({ ...state, login, logout }),
+    [login, logout, state],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

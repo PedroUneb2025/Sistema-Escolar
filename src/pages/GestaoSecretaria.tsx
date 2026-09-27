@@ -9,18 +9,21 @@ const managementCards = [
 
 export function GestaoSecretaria() {
   const { user } = useAuth();
+  // GET /auth/me ainda não devolve nome — usamos o e-mail como retrato
+  // provisório (ver observações da revisão do PR feature/backend-setup).
+  const firstName = user?.email.split('@')[0] ?? '';
 
   return (
     <div className="dashboard">
       <section className="welcome-banner">
         <div>
           <span className="section-label">Gestão acadêmica</span>
-          <h1>Olá, {user?.nome.split(' ')[0]}!</h1>
+          <h1>Olá, {firstName}!</h1>
           <p>Acompanhe os principais dados acadêmicos do Campus II.</p>
         </div>
         <div className="welcome-banner__badge">
           <Icon name="shield" size={28} />
-          <span><small>Perfil de acesso</small><strong>{user?.role}</strong></span>
+          <span><small>Perfil de acesso</small><strong>{user?.perfis.join(', ')}</strong></span>
         </div>
       </section>
 

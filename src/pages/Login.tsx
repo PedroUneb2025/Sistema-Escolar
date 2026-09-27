@@ -40,21 +40,20 @@ export function Login() {
   });
 
   if (isAuthenticated && user) {
-    return <Navigate to={getDefaultRoute(user.role)} replace />;
+    return <Navigate to={getDefaultRoute(user.perfis)} replace />;
   }
 
   const submitCredentials = handleSubmit(async (data) => {
     clearErrors('root');
 
     try {
-      const result = await login({ email: data.email, password: data.password });
+      const loggedUser = await login({
+        email: data.email,
+        password: data.password,
+        remember: data.remember,
+      });
 
-      if (result.requiresMFA) {
-        navigate('/mfa-verification', {
-          replace: true,
-          state: { remember: data.remember, from: requestedRoute },
-        });
-      }
+      navigate(requestedRoute ?? getDefaultRoute(loggedUser.perfis), { replace: true });
     } catch (error) {
       setError('root.server', {
         message: error instanceof Error ? error.message : 'Não foi possível realizar o login.',
@@ -157,15 +156,6 @@ export function Login() {
             </button>
           </form>
 
-          <div className="demo-credentials" aria-label="Dados para demonstração">
-            <Icon name="shield" />
-            <div>
-              <strong>Acesso de demonstração</strong>
-              <span>Aluno: aluno@uneb.br · Senha: 123456</span>
-              <span>Secretaria: secretaria@uneb.br · Senha: 123456</span>
-              <span>Administrador: admin@uneb.br · Senha: 123456</span>
-            </div>
-          </div>
         </div>
       </section>
     </main>

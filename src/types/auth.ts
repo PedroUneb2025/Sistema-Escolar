@@ -1,37 +1,28 @@
-export type UserRole = 'ALUNO' | 'PROFESSOR' | 'SECRETARIA' | 'ADMIN';
+// Perfis definidos no seed do backend (backend/app/seed.py, PR #1).
+// Lista provisória segundo o próprio backend — confirmar com o time antes de travar em enum.
+export type UserRole = 'admin' | 'secretaria' | 'coordenacao' | 'professor' | 'aluno' | 'financeiro';
 
 export interface User {
   id: string;
-  nome: string;
   email: string;
-  role: UserRole;
-  curso: string;
-  mfaVerified: boolean;
+  status: string;
+  perfis: UserRole[];
 }
 
 export interface LoginCredentials {
   email: string;
   password: string;
-}
-
-export interface MFAChallenge {
-  user: User;
-  token: string;
-  maskedDestination: string;
-  expiresAt: number;
+  remember?: boolean;
 }
 
 export interface AuthState {
   user: User | null;
   token: string | null;
-  mfaChallenge: MFAChallenge | null;
   isAuthenticated: boolean;
   isLoading: boolean;
 }
 
 export interface AuthContextValue extends AuthState {
-  login: (credentials: LoginCredentials) => Promise<{ requiresMFA: true }>;
-  verifyMFA: (code: string, remember?: boolean) => Promise<User>;
-  cancelMFA: () => void;
+  login: (credentials: LoginCredentials) => Promise<User>;
   logout: () => void;
 }
