@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+alembic
+pydantic-settings
+pydantic[email]
+pymysql
+cryptography
+python-multipart
+pyjwt
+pwdlib[argon2]
+pytest
+httpx
