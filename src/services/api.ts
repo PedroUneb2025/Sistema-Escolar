@@ -77,3 +77,20 @@ api.interceptors.response.use(
     return Promise.reject(error);
   },
 );
+
+/**
+ * POST /auth/login — envia o x-www-form-urlencoded e retorna o token de acesso
+ */
+export async function loginApi(email: string, pass: string): Promise<LoginResponse> {
+  const params = new URLSearchParams();
+  params.append('username', email);
+  params.append('password', pass);
+
+  const { data } = await api.post<LoginResponse>('/auth/login', params, {
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+  });
+
+  return data;
+}

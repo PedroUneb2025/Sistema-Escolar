@@ -97,3 +97,9 @@ src/
 O login, o JWT e o MFA são simulados no navegador para fins acadêmicos. Ainda não existe banco de dados ou servidor. Em produção, senha e código MFA devem ser validados por uma API segura.
 
 > Projeto educacional sem vínculo com o portal oficial da UNEB.
+
+{
+  "access_token": "TOKEN_JWT",
+  "token_type": "bearer",
+  "perfis": ["ADMIN", "PROFESSOR"]
+}

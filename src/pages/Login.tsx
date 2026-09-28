@@ -61,6 +61,11 @@ export function Login() {
     }
   });
 
+  const handleForgotPassword = () => {
+    // Redireciona ou abre modal de recuperação de senha
+    navigate('/recuperar-senha');
+  };
+
   return (
     <main className="login-page">
       <section className="login-hero" aria-labelledby="login-welcome-title">
@@ -106,6 +111,7 @@ export function Login() {
                 <input
                   id="email"
                   type="email"
+                  disabled={isLoading}
                   autoComplete="username"
                   placeholder="seuemail@uneb.br"
                   aria-invalid={Boolean(errors.email)}
@@ -119,13 +125,21 @@ export function Login() {
             <div className="form-group">
               <div className="form-label-row">
                 <label htmlFor="password">Senha</label>
-                <button className="text-button" type="button">Esqueci minha senha</button>
+                <button
+                  className="text-button"
+                  type="button"
+                  onClick={handleForgotPassword}
+                  disabled={isLoading}
+                >
+                  Esqueci minha senha
+                </button>
               </div>
               <div className={`input-shell ${errors.password ? 'input-shell--error' : ''}`}>
                 <Icon name="lock" />
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
+                  disabled={isLoading}
                   autoComplete="current-password"
                   placeholder="Digite sua senha"
                   aria-invalid={Boolean(errors.password)}
@@ -135,6 +149,7 @@ export function Login() {
                 <button
                   className="icon-button"
                   type="button"
+                  disabled={isLoading}
                   onClick={() => setShowPassword((visible) => !visible)}
                   aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
                 >
@@ -147,7 +162,7 @@ export function Login() {
             </div>
 
             <label className="checkbox-field">
-              <input type="checkbox" {...register('remember')} />
+              <input type="checkbox" disabled={isLoading} {...register('remember')} />
               <span>Manter meu acesso neste dispositivo</span>
             </label>
 

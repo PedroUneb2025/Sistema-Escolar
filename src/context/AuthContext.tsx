@@ -123,3 +123,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
+
+// --- MÉTODOS DE VERIFICAÇÃO DE PERFIL ---
+  const temPerfil = useCallback(
+    (perfilRequerido: User['perfis'][number]): boolean => {
+      if (!state.user?.perfis) return false;
+      return state.user.perfis.includes(perfilRequerido);
+    },
+    [state.user],
+  );
+
+  const temAlgumPerfil = useCallback(
+    (perfisPermitidos: User['perfis'][number][]): boolean => {
+      if (!state.user?.perfis) return false;
+      return state.user.perfis.some((p) => perfisPermitidos.includes(p));
+    },
+    [state.user],
+  );
+
+  const value = useMemo<AuthContextValue>(
+    () => ({ ...state, login, logout, temPerfil, temAlgumPerfil }),
+    [login, logout, temPerfil, temAlgumPerfil, state],
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+// Custom hook para consumir o contexto nos componentes
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
+  }
+  return context;
+};

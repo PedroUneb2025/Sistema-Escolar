@@ -26,3 +26,24 @@ export interface AuthContextValue extends AuthState {
   login: (credentials: LoginCredentials) => Promise<User>;
   logout: () => void;
 }
+
+export interface User {
+  id: string;
+  nome?: string;
+  email: string;
+  status?: string;
+  perfis: UserRole[]; // Usa o UserRole em vez de string genérica
+}
+
+export interface LoginResponse {
+  access_token: string;
+  token_type: string;
+  perfis: UserRole[];
+}
+
+export interface AuthContextType extends AuthState {
+  login: (credentials: LoginCredentials) => Promise<void>;
+  logout: () => void;
+  temPerfil: (perfilRequerido: UserRole) => boolean;
+  temAlgumPerfil: (perfisPermitidos: UserRole[]) => boolean;
+}
