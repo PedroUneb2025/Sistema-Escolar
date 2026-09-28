@@ -1,7 +1,7 @@
-import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { fetchCurrentUser, loginRequest } from '../services/api';
-import type { AuthContextValue, AuthState, LoginCredentials, User } from '../types/auth';
+import type { AuthContextValue, AuthState, LoginCredentials, User, UserRole } from '../types/auth';
 
 const AUTH_STORAGE_KEYS = {
   token: '@UNEB:token',
@@ -72,22 +72,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState((current) => ({ ...current, isLoading: true }));
 
     try {
-      // POST /auth/login (application/x-www-form-urlencoded) — devolve só o token.
       const { access_token: token } = await loginRequest(email, password);
 
-      // Guarda o token antes de chamar /auth/me: o interceptor de api.ts lê o
-      // token do storage em cada requisição.
       const storage = remember ? localStorage : sessionStorage;
       clearStoredSession();
       storage.setItem(AUTH_STORAGE_KEYS.token, token);
 
-      // GET /auth/me — é daqui que vem o array `perfis`.
       const me = await fetchCurrentUser();
       const user: User = {
         id: String(me.id_usuario),
         email: me.email,
         status: me.status,
-        perfis: me.perfis as User['perfis'],
+        perfis: me.perfis,
       };
 
       storage.setItem(AUTH_STORAGE_KEYS.user, JSON.stringify(user));
@@ -116,17 +112,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState({ ...initialAuthState, isLoading: false });
   }, []);
 
-  const value = useMemo<AuthContextValue>(
-    () => ({ ...state, login, logout }),
-    [login, logout, state],
-  );
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-// --- MÉTODOS DE VERIFICAÇÃO DE PERFIL ---
   const temPerfil = useCallback(
-    (perfilRequerido: User['perfis'][number]): boolean => {
+    (perfilRequerido: UserRole): boolean => {
       if (!state.user?.perfis) return false;
       return state.user.perfis.includes(perfilRequerido);
     },
@@ -134,7 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const temAlgumPerfil = useCallback(
-    (perfisPermitidos: User['perfis'][number][]): boolean => {
+    (perfisPermitidos: UserRole[]): boolean => {
       if (!state.user?.perfis) return false;
       return state.user.perfis.some((p) => perfisPermitidos.includes(p));
     },
@@ -149,7 +136,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-// Custom hook para consumir o contexto nos componentes
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {

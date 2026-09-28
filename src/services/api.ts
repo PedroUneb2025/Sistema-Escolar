@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { LoginResponse, UserRole } from '../types/auth';
 
 const AUTH_STORAGE_KEYS = {
   token: '@UNEB:token',
@@ -21,43 +22,6 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-interface LoginResponse {
-  access_token: string;
-  token_type: string;
-}
-
-export interface MeResponse {
-  id_usuario: number;
-  email: string;
-  status: string;
-  perfis: string[];
-}
-
-/**
- * POST /auth/login — contrato do backend (backend/README.md, PR #1):
- * exige application/x-www-form-urlencoded com os campos `username` e `password`
- * (nome fixo de `username` porque o backend usa OAuth2PasswordRequestForm, mesmo
- * que o valor enviado seja o e-mail). Retorna apenas o token; os dados do
- * usuário (incluindo `perfis`) vêm de GET /auth/me.
- */
-export async function loginRequest(email: string, password: string) {
-  const body = new URLSearchParams();
-  body.set('username', email);
-  body.set('password', password);
-
-  const { data } = await api.post<LoginResponse>('/auth/login', body, {
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  });
-
-  return data;
-}
-
-/** GET /auth/me — retorna { id_usuario, email, status, perfis: [...] }. */
-export async function fetchCurrentUser() {
-  const { data } = await api.get<MeResponse>('/auth/me');
-  return data;
-}
-
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -78,19 +42,30 @@ api.interceptors.response.use(
   },
 );
 
-/**
- * POST /auth/login — envia o x-www-form-urlencoded e retorna o token de acesso
- */
-export async function loginApi(email: string, pass: string): Promise<LoginResponse> {
-  const params = new URLSearchParams();
-  params.append('username', email);
-  params.append('password', pass);
+export interface MeResponse {
+  id_usuario: number;
+  email: string;
+  status: string;
+  perfis: UserRole[];
+}
 
-  const { data } = await api.post<LoginResponse>('/auth/login', params, {
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
+/**
+ * POST /auth/login — exige application/x-www-form-urlencoded com `username` e `password`
+ */
+export async function loginRequest(email: string, password: string) {
+  const body = new URLSearchParams();
+  body.set('username', email);
+  body.set('password', password);
+
+  const { data } = await api.post<LoginResponse>('/auth/login', body, {
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
   });
 
+  return data;
+}
+
+/** GET /auth/me — retorna dados do usuário e perfis */
+export async function fetchCurrentUser() {
+  const { data } = await api.get<MeResponse>('/auth/me');
   return data;
 }
