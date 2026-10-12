@@ -24,6 +24,9 @@ TABELAS_GERENCIADAS = {
     "usuario", "perfil", "permissao",
     "usuario_perfil", "perfil_permissao",
     "aluno", "professor",
+    "sala", "curso", "disciplina",
+    "matriz_curricular", "matriz_disciplina",
+    "turma", "matricula_turma",
 }
 
 def include_object(object, name, type_, reflected, compare_to):

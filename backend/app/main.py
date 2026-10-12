@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes.auth import router as auth_router
+from app.api.routes.curriculo import router as curriculo_router
 from app.core.config import settings
 
 app = FastAPI(title="SGA-Edu API")
@@ -15,6 +16,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(curriculo_router)
 
 
 @app.get("/health")

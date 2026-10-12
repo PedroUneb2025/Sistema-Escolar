@@ -15,7 +15,7 @@ from app.models.usuario import StatusUsuario, Usuario
 PERFIS = ["ADMIN", "SECRETARIA", "PROFESSOR", "ALUNO"]  # nomes iguais ao UserRole do front
 
 ADMIN_EMAIL = "admin@uneb.br"
-ADMIN_SENHA = "SGA-EDU@2026"  # trocar após o primeiro login
+ADMIN_SENHA = "troque-esta-senha"  # trocar após o primeiro login
 
 
 def run() -> None:
