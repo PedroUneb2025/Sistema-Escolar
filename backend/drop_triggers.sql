@@ -1,0 +1,4 @@
+DROP TRIGGER IF EXISTS trg_matriz_curricular_unica_ativa_bi;
+DROP TRIGGER IF EXISTS trg_matriz_curricular_unica_ativa_bu;
+DROP TRIGGER IF EXISTS trg_matriz_curricular_unica_ativa_ai;
+DROP TRIGGER IF EXISTS trg_matriz_curricular_unica_ativa_au;
