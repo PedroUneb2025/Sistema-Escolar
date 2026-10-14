@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { isDemoSession } from '../services/demoMode';
 import { Icon } from './Icon';
 import type { IconName } from './Icon';
 
@@ -159,7 +160,10 @@ export function CoreLayout() {
           </div>
         </header>
 
-        <main className="app-content" id="main-content" tabIndex={-1}><Outlet /></main>
+        <main className="app-content" id="main-content" tabIndex={-1}>
+          {isDemoSession() && <div className="form-alert" role="status">Modo de teste — dados fictícios salvos somente nesta aba. Ao sair da conta, os testes serão apagados.</div>}
+          <Outlet />
+        </main>
 
         <footer className="app-footer">
           <p>© 2026 UNEB · Campus II — Alagoinhas</p>

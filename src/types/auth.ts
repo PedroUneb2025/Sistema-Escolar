@@ -30,6 +30,7 @@ export interface LoginResponse {
 export interface AuthContextValue extends AuthState {
   login: (credentials: LoginCredentials) => Promise<User>;
   logout: () => void;
+  loginDemo: () => void;
   temPerfil: (perfilRequerido: UserRole) => boolean;
   temAlgumPerfil: (perfisPermitidos: UserRole[]) => boolean;
 }

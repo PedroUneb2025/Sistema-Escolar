@@ -3,6 +3,10 @@ import type { ReactNode } from 'react';
 import { fetchCurrentUser, loginRequest, type MeResponse } from '../services/api';
 import type { AuthContextValue, AuthState, LoginCredentials, User, UserRole } from '../types/auth';
 
+import { DEMO_ENABLED, isDemoSession, startDemoSession, endDemoSession } from '../services/demoMode';
+
+const demoUser: User = { id: 'demo', email: 'secretaria@exemplo.com', status: 'ativo', perfis: ['secretaria'] };
+
 import { getApiError } from '../services/apiError';
 
 function toUser(me: MeResponse): User {
@@ -38,14 +42,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     clearStoredSession();
+    endDemoSession();
     setState({ ...initialAuthState, isLoading: false });
+  }, []);
+
+  const loginDemo = useCallback(() => {
+    if (!DEMO_ENABLED) return;
+    clearStoredSession();
+    startDemoSession();
+    setState({ user: demoUser, token: null, isAuthenticated: true, isLoading: false });
   }, []);
 
   useEffect(() => {
     let active = true;
     const token = sessionStorage.getItem(AUTH_STORAGE_KEYS.token) ?? localStorage.getItem(AUTH_STORAGE_KEYS.token);
     window.addEventListener('auth:expired', logout);
-    if (token && !token.startsWith('mock-')) {
+    if (isDemoSession()) {
+      setState({ user: demoUser, token: null, isAuthenticated: true, isLoading: false });
+    } else if (token && !token.startsWith('mock-')) {
       fetchCurrentUser().then((me) => {
         if (active) setState({ user: toUser(me), token, isAuthenticated: true, isLoading: false });
       }).catch(() => { if (active) logout(); });
@@ -59,6 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [logout]);
 
   const login = useCallback(async ({ email, password, remember = false }: LoginCredentials) => {
+    endDemoSession();
     clearStoredSession();
     setState({ ...initialAuthState, isLoading: true });
     try {
@@ -93,8 +108,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo<AuthContextValue>(
-    () => ({ ...state, login, logout, temPerfil, temAlgumPerfil }),
-    [login, logout, temPerfil, temAlgumPerfil, state],
+    () => ({ ...state, login, loginDemo, logout, temPerfil, temAlgumPerfil }),
+    [login, loginDemo, logout, temPerfil, temAlgumPerfil, state],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
