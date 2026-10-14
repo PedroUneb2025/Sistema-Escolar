@@ -1,7 +1,16 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { fetchCurrentUser, loginRequest } from '../services/api';
+import { fetchCurrentUser, loginRequest, type MeResponse } from '../services/api';
 import type { AuthContextValue, AuthState, LoginCredentials, User, UserRole } from '../types/auth';
+
+import { getApiError } from '../services/apiError';
+
+function toUser(me: MeResponse): User {
+  if (!me || !me.id_usuario || !me.email || !Array.isArray(me.perfis) || me.status !== 'ativo') {
+    throw new Error('Usuário inválido ou inativo.');
+  }
+  return { id: String(me.id_usuario), email: me.email, status: me.status, perfis: me.perfis.map((p) => p.toLowerCase() as UserRole) };
+}
 
 const AUTH_STORAGE_KEYS = {
   token: '@UNEB:token',
@@ -17,30 +26,6 @@ const initialAuthState: AuthState = {
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
 
-function restoreStoredUser(value: string | null): User | null {
-  if (!value) return null;
-
-  try {
-    return JSON.parse(value) as User;
-  } catch {
-    return null;
-  }
-}
-
-function getStoredSession() {
-  const localToken = localStorage.getItem(AUTH_STORAGE_KEYS.token);
-  const localUser = restoreStoredUser(localStorage.getItem(AUTH_STORAGE_KEYS.user));
-
-  if (localToken && localUser) return { token: localToken, user: localUser };
-
-  const sessionToken = sessionStorage.getItem(AUTH_STORAGE_KEYS.token);
-  const sessionUser = restoreStoredUser(sessionStorage.getItem(AUTH_STORAGE_KEYS.user));
-
-  if (sessionToken && sessionUser) return { token: sessionToken, user: sessionUser };
-
-  return null;
-}
-
 function clearStoredSession() {
   localStorage.removeItem(AUTH_STORAGE_KEYS.token);
   localStorage.removeItem(AUTH_STORAGE_KEYS.user);
@@ -51,97 +36,45 @@ function clearStoredSession() {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>(initialAuthState);
 
-  useEffect(() => {
-    const storedSession = getStoredSession();
-
-    if (storedSession) {
-      setState({
-        user: storedSession.user,
-        token: storedSession.token,
-        isAuthenticated: true,
-        isLoading: false,
-      });
-      return;
-    }
-
-    clearStoredSession();
-    setState({ ...initialAuthState, isLoading: false });
-  }, []);
-
-  const login = useCallback(async ({ email, password, remember = false }: LoginCredentials) => {
-    setState((current) => ({ ...current, isLoading: true }));
-
-    try {
-      const { access_token: token } = await loginRequest(email, password);
-
-      const storage = remember ? localStorage : sessionStorage;
-      clearStoredSession();
-      storage.setItem(AUTH_STORAGE_KEYS.token, token);
-
-      const me = await fetchCurrentUser();
-      const user: User = {
-        id: String(me.id_usuario),
-        email: me.email,
-        status: me.status,
-        perfis: me.perfis,
-      };
-
-      storage.setItem(AUTH_STORAGE_KEYS.user, JSON.stringify(user));
-
-      setState({ user, token, isAuthenticated: true, isLoading: false });
-      return user;
-    } catch (error) {
-      // Se for 401 real do backend, credenciais inválidas
-      if (
-        typeof error === 'object' &&
-        error !== null &&
-        'response' in error &&
-        (error as { response?: { status?: number } }).response?.status === 401
-      ) {
-        clearStoredSession();
-        setState((current) => ({ ...current, isLoading: false }));
-        // eslint-disable-next-line preserve-caught-error
-        throw new Error('E-mail ou senha incorretos. Confira os dados e tente novamente.');
-      }
-
-      // Se a API backend estiver offline (Network Error, ECONNREFUSED ou 404):
-      // Permite o login acadêmico simulado para fins de teste e avaliação do protótipo
-      const lowerEmail = email.trim().toLowerCase();
-      let perfis: UserRole[] = ['secretaria', 'admin'];
-
-      if (lowerEmail.includes('aluno')) {
-        perfis = ['aluno'];
-      } else if (lowerEmail.includes('prof')) {
-        perfis = ['professor'];
-      } else if (lowerEmail.includes('coord')) {
-        perfis = ['coordenacao', 'secretaria'];
-      } else if (lowerEmail.includes('admin')) {
-        perfis = ['admin', 'secretaria', 'coordenacao'];
-      }
-
-      const mockUser: User = {
-        id: 'DEMO-2026',
-        nome: lowerEmail.split('@')[0],
-        email: lowerEmail,
-        status: 'ativo',
-        perfis,
-      };
-
-      const mockToken = 'mock-jwt-campus2-session';
-      const storage = remember ? localStorage : sessionStorage;
-      clearStoredSession();
-      storage.setItem(AUTH_STORAGE_KEYS.token, mockToken);
-      storage.setItem(AUTH_STORAGE_KEYS.user, JSON.stringify(mockUser));
-
-      setState({ user: mockUser, token: mockToken, isAuthenticated: true, isLoading: false });
-      return mockUser;
-    }
-  }, []);
-
   const logout = useCallback(() => {
     clearStoredSession();
     setState({ ...initialAuthState, isLoading: false });
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    const token = sessionStorage.getItem(AUTH_STORAGE_KEYS.token) ?? localStorage.getItem(AUTH_STORAGE_KEYS.token);
+    window.addEventListener('auth:expired', logout);
+    if (token && !token.startsWith('mock-')) {
+      fetchCurrentUser().then((me) => {
+        if (active) setState({ user: toUser(me), token, isAuthenticated: true, isLoading: false });
+      }).catch(() => { if (active) logout(); });
+    } else {
+      logout();
+    }
+    return () => {
+      active = false;
+      window.removeEventListener('auth:expired', logout);
+    };
+  }, [logout]);
+
+  const login = useCallback(async ({ email, password, remember = false }: LoginCredentials) => {
+    clearStoredSession();
+    setState({ ...initialAuthState, isLoading: true });
+    try {
+      const { access_token: token } = await loginRequest(email.trim(), password);
+      if (!token || typeof token !== 'string') throw new Error('Resposta de autenticação inválida.');
+      const storage = remember ? localStorage : sessionStorage;
+      storage.setItem(AUTH_STORAGE_KEYS.token, token);
+      const user = toUser(await fetchCurrentUser());
+      storage.setItem(AUTH_STORAGE_KEYS.user, JSON.stringify(user));
+      setState({ user, token, isAuthenticated: true, isLoading: false });
+      return user;
+    } catch (error) {
+      logout();
+      throw new Error(getApiError(error, 'Não foi possível entrar. Tente novamente.'), { cause: error });
+    }
+  }, [logout]);
 
   const temPerfil = useCallback(
     (perfilRequerido: UserRole): boolean => {

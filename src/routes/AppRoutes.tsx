@@ -5,6 +5,7 @@ import { GestaoSecretaria } from '../pages/GestaoSecretaria';
 import { Login } from '../pages/Login';
 import { Unauthorized } from '../pages/Unauthorized';
 import { ProtectedRoute } from './ProtectedRoute';
+import { CurriculoPage } from '../pages/curriculo/CurriculoPage';
 import { getTurmaRoutes } from './turmaRoutes';
 
 export function AppRoutes() {
@@ -29,6 +30,18 @@ export function AppRoutes() {
         <Route element={<CoreLayout />}>
           <Route path="/secretaria/gestao" element={<GestaoSecretaria />} />
           {getTurmaRoutes()}
+        </Route>
+      </Route>
+
+      <Route element={<ProtectedRoute allowedRoles={['secretaria', 'admin', 'coordenacao']} />}>
+        <Route element={<CoreLayout />}>
+          {(['cursos', 'disciplinas', 'matrizes'] as const).map((kind) => (
+            <Route key={kind} path={`curriculo/${kind}`}>
+              <Route index element={<CurriculoPage kind={kind} />} />
+              <Route path="novo" element={<CurriculoPage kind={kind} mode="create" />} />
+              <Route path=":id/editar" element={<CurriculoPage kind={kind} mode="edit" />} />
+            </Route>
+          ))}
         </Route>
       </Route>
 

@@ -49,7 +49,12 @@ function getPrimaryRoleLabel(perfis: string[] | undefined) {
 export function CoreLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { logout, user } = useAuth();
-  const navigation = user?.perfis.includes('aluno') ? studentNavigation : staffNavigation;
+  const canManageCurriculum = user?.perfis.some((role) => ['admin', 'secretaria', 'coordenacao'].includes(role));
+  const navigation = canManageCurriculum ? [...staffNavigation,
+    { to: '/curriculo/cursos', label: 'Cursos', icon: 'book' as const },
+    { to: '/curriculo/disciplinas', label: 'Disciplinas', icon: 'book' as const },
+    { to: '/curriculo/matrizes', label: 'Matrizes curriculares', icon: 'book' as const },
+  ] : user?.perfis.includes('aluno') ? studentNavigation : staffNavigation;
   const displayName = getDisplayName(user?.email);
 
   useEffect(() => {
@@ -98,7 +103,7 @@ export function CoreLayout() {
               to={item.to}
               end={item.end}
               onClick={() => setIsSidebarOpen(false)}
-              className={({ isActive }) => `sidebar-link ${isActive && (index === 0 || item.to === '/turmas') ? 'sidebar-link--active' : ''}`}
+              className={({ isActive }) => `sidebar-link ${isActive && (index === 0 || item.to === '/turmas' || item.to.startsWith('/curriculo/')) ? 'sidebar-link--active' : ''}`}
             >
               <Icon name={item.icon} />
               <span>{item.label}</span>
