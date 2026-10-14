@@ -39,6 +39,8 @@ jobs:
           npm install
 
       - name: Gerar versão de produção
+        env:
+          VITE_ENABLE_DEMO: 'true'
         run: npm run build
 
       - name: Configurar GitHub Pages
