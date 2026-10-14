@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { isDemoSession, demoAdapter } from './demoMode';
 import type { LoginResponse } from '../types/auth';
 
 const AUTH_STORAGE_KEYS = {
@@ -12,6 +13,11 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
+  if (isDemoSession()) {
+    config.adapter = demoAdapter;
+    config.headers.delete('Authorization');
+    return config;
+  }
   const token =
     sessionStorage.getItem(AUTH_STORAGE_KEYS.token) ??
     localStorage.getItem(AUTH_STORAGE_KEYS.token);

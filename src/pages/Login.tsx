@@ -7,6 +7,7 @@ import { LoadingSpinner } from '../components/LoadingSpinner';
 import { useAuth } from '../hooks/useAuth';
 import { loginSchema } from '../schemas/authSchemas';
 import type { LoginFormData } from '../schemas/authSchemas';
+import { DEMO_ENABLED, isDemoSession } from '../services/demoMode';
 import { getDefaultRoute } from '../routes/defaultRoute';
 
 function Brand() {
@@ -23,7 +24,7 @@ function Brand() {
 
 export function Login() {
   const [showPassword, setShowPassword] = useState(false);
-  const { isAuthenticated, isLoading, login, user } = useAuth();
+  const { isAuthenticated, isLoading, login, loginDemo, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const requestedRoute = (location.state as { from?: string } | null)?.from;
@@ -40,7 +41,7 @@ export function Login() {
   });
 
   if (isAuthenticated && user) {
-    return <Navigate to={getDefaultRoute(user.perfis)} replace />;
+    return <Navigate to={isDemoSession() ? '/curriculo/cursos' : getDefaultRoute(user.perfis)} replace />;
   }
 
   const submitCredentials = handleSubmit(async (data) => {
@@ -160,6 +161,15 @@ export function Login() {
               {isLoading ? <><LoadingSpinner label="Validando credenciais" /> Validando...</> : 'Continuar'}
             </button>
           </form>
+          {DEMO_ENABLED && <div className="demo-credentials">
+            <div>
+              <strong>Acesso temporário de demonstração</strong>
+              <p>Use dados fictícios para testar cursos, disciplinas e matrizes. Nenhuma informação será enviada ao servidor.</p>
+              <button type="button" className="secondary-button" disabled={isLoading} onClick={() => { loginDemo(); navigate('/curriculo/cursos'); }}>
+                Entrar em modo de teste
+              </button>
+            </div>
+          </div>}
 
 
         </div>
