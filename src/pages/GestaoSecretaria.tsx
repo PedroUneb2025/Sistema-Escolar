@@ -1,9 +1,10 @@
+import { Link } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { useAuth } from '../hooks/useAuth';
 
 const managementCards = [
   { title: 'Alunos ativos', value: '1.284', description: 'Matrículas no período atual', icon: 'users' as const },
-  { title: 'Turmas abertas', value: '48', description: 'Turmas cadastradas em 2026.2', icon: 'book' as const },
+  { title: 'Turmas abertas', value: '48', description: 'Turmas cadastradas em 2026.2', icon: 'book' as const, link: '/turmas', linkText: 'Gerenciar turmas →' },
   { title: 'Solicitações', value: '16', description: 'Documentos aguardando análise', icon: 'file' as const },
 ];
 
@@ -36,7 +37,14 @@ export function GestaoSecretaria() {
           {managementCards.map((card) => (
             <article className="summary-card" key={card.title}>
               <span className="summary-card__icon"><Icon name={card.icon} /></span>
-              <h3>{card.title}</h3><strong className="summary-card__value">{card.value}</strong><p>{card.description}</p>
+              <h3>{card.title}</h3>
+              <strong className="summary-card__value">{card.value}</strong>
+              <p>{card.description}</p>
+              {card.link && (
+                <Link to={card.link} className="action-link" style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--blue-700)', textDecoration: 'none' }}>
+                  {card.linkText}
+                </Link>
+              )}
             </article>
           ))}
         </div>

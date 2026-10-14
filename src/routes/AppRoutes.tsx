@@ -5,6 +5,7 @@ import { GestaoSecretaria } from '../pages/GestaoSecretaria';
 import { Login } from '../pages/Login';
 import { Unauthorized } from '../pages/Unauthorized';
 import { ProtectedRoute } from './ProtectedRoute';
+import { getTurmaRoutes } from './turmaRoutes';
 
 export function AppRoutes() {
   return (
@@ -24,9 +25,10 @@ export function AppRoutes() {
         </Route>
       </Route>
 
-      <Route element={<ProtectedRoute allowedRoles={['secretaria', 'admin', 'coordenacao']} />}>
+      <Route element={<ProtectedRoute allowedRoles={['secretaria', 'admin', 'coordenacao', 'professor']} />}>
         <Route element={<CoreLayout />}>
           <Route path="/secretaria/gestao" element={<GestaoSecretaria />} />
+          {getTurmaRoutes()}
         </Route>
       </Route>
 

@@ -21,7 +21,7 @@ const studentNavigation: NavigationItem[] = [
 const staffNavigation: NavigationItem[] = [
   { to: '/secretaria/gestao', label: 'Visão geral', icon: 'home', end: true },
   { to: '/secretaria/gestao', label: 'Alunos', icon: 'users' },
-  { to: '/secretaria/gestao', label: 'Turmas e disciplinas', icon: 'book' },
+  { to: '/turmas', label: 'Turmas e disciplinas', icon: 'book' },
   { to: '/secretaria/gestao', label: 'Configurações', icon: 'settings' },
 ];
 
@@ -34,9 +34,7 @@ const roleLabels: Record<string, string> = {
   financeiro: 'Financeiro',
 };
 
-// GET /auth/me hoje só devolve { id_usuario, email, status, perfis }, sem nome
-// de exibição — usamos o e-mail como retrato provisório até o backend expor
-// um campo de nome (ver observações da revisão do PR feature/backend-setup).
+
 function getDisplayName(email: string | undefined) {
   if (!email) return '';
   const [handle] = email.split('@');
@@ -100,7 +98,7 @@ export function CoreLayout() {
               to={item.to}
               end={item.end}
               onClick={() => setIsSidebarOpen(false)}
-              className={({ isActive }) => `sidebar-link ${isActive && index === 0 ? 'sidebar-link--active' : ''}`}
+              className={({ isActive }) => `sidebar-link ${isActive && (index === 0 || item.to === '/turmas') ? 'sidebar-link--active' : ''}`}
             >
               <Icon name={item.icon} />
               <span>{item.label}</span>
