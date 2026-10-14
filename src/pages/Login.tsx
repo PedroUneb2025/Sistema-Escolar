@@ -33,7 +33,6 @@ export function Login() {
     handleSubmit,
     clearErrors,
     setError,
-    setValue,
     formState: { errors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -61,12 +60,6 @@ export function Login() {
       });
     }
   });
-
-  const preencherCredenciais = (emailExemplo: string) => {
-    setValue('email', emailExemplo, { shouldValidate: true });
-    setValue('password', '123456', { shouldValidate: true });
-    clearErrors();
-  };
 
   const handleForgotPassword = () => {
     // Redireciona ou abre modal de recuperação de senha
@@ -168,34 +161,7 @@ export function Login() {
             </button>
           </form>
 
-          {/* Card com credenciais de demonstração acadêmica e preenchimento rápido */}
-          <div className="demo-credentials" role="region" aria-label="Acesso de teste institucional">
-            <Icon name="shield" size={24} />
-            <div style={{ width: '100%' }}>
-              <strong>Ambiente de Teste (Campus II)</strong>
-              <span>
-                Senha padrão: <code>123456</code> (não é necessário código de verificação).
-              </span>
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.65rem', flexWrap: 'wrap' }}>
-                <button
-                  type="button"
-                  className="secondary-button"
-                  style={{ minHeight: '34px', padding: '0.35rem 0.75rem', fontSize: '0.78rem' }}
-                  onClick={() => preencherCredenciais('secretaria@uneb.br')}
-                >
-                  Usar Secretaria / Admin
-                </button>
-                <button
-                  type="button"
-                  className="secondary-button"
-                  style={{ minHeight: '34px', padding: '0.35rem 0.75rem', fontSize: '0.78rem' }}
-                  onClick={() => preencherCredenciais('aluno@uneb.br')}
-                >
-                  Usar Aluno
-                </button>
-              </div>
-            </div>
-          </div>
+
         </div>
       </section>
     </main>

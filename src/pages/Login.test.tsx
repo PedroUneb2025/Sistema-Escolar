@@ -20,18 +20,13 @@ function renderApplication(initialRoute = '/login') {
 // (POST /auth/login em application/x-www-form-urlencoded + GET /auth/me,
 // ver backend/README.md do PR feature/backend-setup). Aqui mockamos a
 // camada HTTP (src/services/api.ts) em vez de bater num backend de verdade.
-vi.mock('../services/api', async () => {
-  const actual = await vi.importActual<typeof import('../services/api')>('../services/api');
-  return {
-    ...actual,
-    api: { ...actual.api, post: vi.fn(), get: vi.fn() },
-  };
-});
+vi.spyOn(api, 'post');
+vi.spyOn(api, 'get');
 
 const mockedApi = vi.mocked(api);
 
 afterEach(() => {
-  vi.clearAllMocks();
+  vi.resetAllMocks();
 });
 
 describe('fluxo de autenticação', () => {
@@ -52,7 +47,7 @@ describe('fluxo de autenticação', () => {
       data: { access_token: 'token-aluno', token_type: 'bearer' },
     });
     mockedApi.get.mockResolvedValueOnce({
-      data: { id_usuario: 20260001, email: 'aluno@uneb.br', status: 'ativo', perfis: ['aluno'] },
+      data: { id_usuario: 20260001, email: 'aluno@uneb.br', status: 'ativo', perfis: ['ALUNO'] },
     });
 
     const user = userEvent.setup();
@@ -76,7 +71,7 @@ describe('fluxo de autenticação', () => {
   });
 
   it('mostra erro quando as credenciais são inválidas (401)', async () => {
-    mockedApi.post.mockRejectedValueOnce({ response: { status: 401 } });
+    mockedApi.post.mockRejectedValueOnce({ isAxiosError: true, response: { status: 401 } });
 
     const user = userEvent.setup();
     renderApplication();
@@ -103,8 +98,44 @@ describe('fluxo de autenticação', () => {
       }),
     );
 
+    mockedApi.get.mockResolvedValueOnce({ data: { id_usuario: 1, email: 'secretaria@uneb.br', status: 'ativo', perfis: ['SECRETARIA'] } });
     renderApplication('/aluno/dashboard');
 
     expect(await screen.findByRole('heading', { name: 'Acesso não autorizado' })).toBeVisible();
   });
+  it.each([undefined, 404, 500])('não autentica quando o servidor falha (%s)', async (status) => {
+    mockedApi.post.mockRejectedValueOnce({ isAxiosError: true, response: status ? { status } : undefined });
+    const user = userEvent.setup();
+    renderApplication();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Continuar' })).toBeEnabled());
+    await user.type(screen.getByLabelText('E-mail institucional'), 'admin@uneb.br');
+    await user.type(screen.getByLabelText('Senha'), '123456');
+    await user.click(screen.getByRole('button', { name: 'Continuar' }));
+    expect(await screen.findByRole('alert')).toBeVisible();
+    expect(sessionStorage.getItem('@UNEB:token')).toBeNull();
+    expect(localStorage.getItem('@UNEB:token')).toBeNull();
+    expect(mockedApi.get).not.toHaveBeenCalled();
+  });
+
+  it('remove o token se a consulta ao perfil falhar', async () => {
+    mockedApi.post.mockResolvedValueOnce({ data: { access_token: 'token', token_type: 'bearer' } });
+    mockedApi.get.mockRejectedValueOnce({ isAxiosError: true });
+    const user = userEvent.setup();
+    renderApplication();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Continuar' })).toBeEnabled());
+    await user.type(screen.getByLabelText('E-mail institucional'), 'admin@uneb.br');
+    await user.type(screen.getByLabelText('Senha'), '123456');
+    await user.click(screen.getByRole('button', { name: 'Continuar' }));
+    expect(await screen.findByRole('alert')).toBeVisible();
+    expect(sessionStorage.getItem('@UNEB:token')).toBeNull();
+  });
+
+  it('descarta uma sessão mockada antiga', async () => {
+    sessionStorage.setItem('@UNEB:token', 'mock-jwt-campus2-session');
+    renderApplication('/curriculo/cursos');
+    expect(await screen.findByRole('heading', { name: 'Entre na sua conta' })).toBeVisible();
+    expect(mockedApi.get).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem('@UNEB:token')).toBeNull();
+  });
+
 });
