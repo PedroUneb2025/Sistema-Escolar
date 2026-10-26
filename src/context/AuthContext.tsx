@@ -7,6 +7,8 @@ import { DEMO_ENABLED, isDemoSession, startDemoSession, endDemoSession } from '.
 import { getApiError } from '../services/apiError';
 
 const demoUser: User = { id: 'demo', email: 'secretaria@exemplo.com', status: 'ativo', perfis: ['secretaria'] };
+const demoAluno: User = { id: 'aluno-demo', email: 'aluno@uneb.br', nome: 'Aluno Demonstração', status: 'ativo', perfis: ['aluno'] };
+const demoDirecao: User = { id: 'direcao-demo', email: 'direcao@uneb.br', nome: 'Direção Acadêmica', status: 'ativo', perfis: ['admin', 'secretaria', 'coordenacao'] };
 
 function toUser(me: MeResponse): User {
   if (!me || !me.id_usuario || !me.email || !Array.isArray(me.perfis) || me.status !== 'ativo') {
@@ -63,11 +65,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState({ user: demoUser, token: null, isAuthenticated: true, isLoading: false });
   }, []);
 
+  const loginDiretoAluno = useCallback(() => {
+    clearStoredSession();
+    sessionStorage.setItem(AUTH_STORAGE_KEYS.token, 'temp-token-aluno');
+    sessionStorage.setItem(AUTH_STORAGE_KEYS.user, JSON.stringify(demoAluno));
+    setState({ user: demoAluno, token: 'temp-token-aluno', isAuthenticated: true, isLoading: false });
+  }, []);
+
+  const loginDiretoDirecao = useCallback(() => {
+    clearStoredSession();
+    sessionStorage.setItem(AUTH_STORAGE_KEYS.token, 'temp-token-direcao');
+    sessionStorage.setItem(AUTH_STORAGE_KEYS.user, JSON.stringify(demoDirecao));
+    setState({ user: demoDirecao, token: 'temp-token-direcao', isAuthenticated: true, isLoading: false });
+  }, []);
+
   useEffect(() => {
     let active = true;
     const token = sessionStorage.getItem(AUTH_STORAGE_KEYS.token) ?? localStorage.getItem(AUTH_STORAGE_KEYS.token);
+    const storedUserRaw = sessionStorage.getItem(AUTH_STORAGE_KEYS.user) ?? localStorage.getItem(AUTH_STORAGE_KEYS.user);
     
     window.addEventListener('auth:expired', logout);
+
+    if (token?.startsWith('temp-token-') && storedUserRaw) {
+      try {
+        const parsed = JSON.parse(storedUserRaw) as User;
+        setState({ user: parsed, token, isAuthenticated: true, isLoading: false });
+        return;
+      } catch {
+        // ignora e continua
+      }
+    }
 
     if (isDemoSession()) {
       setState({ user: demoUser, token: null, isAuthenticated: true, isLoading: false });
@@ -137,8 +164,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo<AuthContextValue>(
-    () => ({ ...state, login, loginDemo, logout, temPerfil, temAlgumPerfil }),
-    [login, loginDemo, logout, temPerfil, temAlgumPerfil, state],
+    () => ({ ...state, login, loginDemo, loginDiretoAluno, loginDiretoDirecao, logout, temPerfil, temAlgumPerfil }),
+    [login, loginDemo, loginDiretoAluno, loginDiretoDirecao, logout, temPerfil, temAlgumPerfil, state],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

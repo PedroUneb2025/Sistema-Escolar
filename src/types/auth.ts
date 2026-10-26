@@ -31,6 +31,8 @@ export interface AuthContextValue extends AuthState {
   login: (credentials: LoginCredentials) => Promise<User>;
   logout: () => void;
   loginDemo: () => void;
+  loginDiretoAluno: () => void;
+  loginDiretoDirecao: () => void;
   temPerfil: (perfilRequerido: UserRole) => boolean;
   temAlgumPerfil: (perfisPermitidos: UserRole[]) => boolean;
 }

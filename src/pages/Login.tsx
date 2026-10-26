@@ -24,7 +24,7 @@ function Brand() {
 
 export function Login() {
   const [showPassword, setShowPassword] = useState(false);
-  const { isAuthenticated, isLoading, login, loginDemo, user } = useAuth();
+  const { isAuthenticated, isLoading, login, loginDemo, loginDiretoAluno, loginDiretoDirecao, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const requestedRoute = (location.state as { from?: string } | null)?.from;
@@ -161,6 +161,39 @@ export function Login() {
               {isLoading ? <><LoadingSpinner label="Validando credenciais" /> Validando...</> : 'Continuar'}
             </button>
           </form>
+          <div className="demo-credentials" style={{ marginTop: '1.5rem', background: '#e0f2fe', border: '1px solid #bae6fd' }}>
+            <div style={{ width: '100%' }}>
+              <strong style={{ color: '#0369a1', fontSize: '0.85rem' }}>Acesso Rápido para Demonstração (Sem Login)</strong>
+              <p style={{ margin: '0.35rem 0 0.75rem', fontSize: '0.76rem', color: '#075985' }}>
+                Clique abaixo para entrar diretamente e testar as telas e painéis:
+              </p>
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className="primary-button"
+                  style={{ flex: '1 1 140px', minHeight: '40px', padding: '0.5rem 0.8rem', fontSize: '0.82rem', background: '#0284c7' }}
+                  onClick={() => {
+                    loginDiretoAluno();
+                    navigate('/aluno/consulta');
+                  }}
+                >
+                  Entrar direto como Aluno
+                </button>
+                <button
+                  type="button"
+                  className="primary-button"
+                  style={{ flex: '1 1 140px', minHeight: '40px', padding: '0.5rem 0.8rem', fontSize: '0.82rem', background: '#0369a1' }}
+                  onClick={() => {
+                    loginDiretoDirecao();
+                    navigate('/secretaria/gestao');
+                  }}
+                >
+                  Entrar direto como Direção
+                </button>
+              </div>
+            </div>
+          </div>
+
           {DEMO_ENABLED && <div className="demo-credentials">
             <div>
               <strong>Acesso temporário de demonstração</strong>

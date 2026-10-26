@@ -4,6 +4,7 @@ import { DashboardAluno } from '../pages/DashboardAluno';
 import { GestaoSecretaria } from '../pages/GestaoSecretaria';
 import { Login } from '../pages/Login';
 import { Unauthorized } from '../pages/Unauthorized';
+import { ConsultaAcademica } from '../pages/ConsultaAcademica';
 import { ProtectedRoute } from './ProtectedRoute';
 import { CurriculoPage } from '../pages/curriculo/CurriculoPage';
 import { getTurmaRoutes } from './turmaRoutes';
@@ -23,6 +24,12 @@ export function AppRoutes() {
       <Route element={<ProtectedRoute allowedRoles={['aluno']} />}>
         <Route element={<CoreLayout />}>
           <Route path="/aluno/dashboard" element={<DashboardAluno />} />
+        </Route>
+      </Route>
+
+      <Route element={<ProtectedRoute allowedRoles={['aluno', 'admin', 'coordenacao', 'professor']} />}>
+        <Route element={<CoreLayout />}>
+          <Route path="/aluno/consulta" element={<ConsultaAcademica />} />
         </Route>
       </Route>
 

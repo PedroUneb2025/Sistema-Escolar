@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { useAuth } from '../hooks/useAuth';
 
@@ -8,6 +9,7 @@ const services = [
 ];
 
 export function DashboardAluno() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   // GET /auth/me ainda não devolve nome nem curso — usamos o e-mail como
   // retrato provisório (ver observações da revisão do PR feature/backend-setup).
@@ -33,7 +35,12 @@ export function DashboardAluno() {
             <article className="summary-card" key={service.title}>
               <span className="summary-card__icon"><Icon name={service.icon} /></span>
               <h3>{service.title}</h3><p>{service.description}</p>
-              <button type="button">Ver detalhes <span aria-hidden="true">→</span></button>
+              <button
+                type="button"
+                onClick={() => navigate('/aluno/consulta')}
+              >
+                Ver detalhes <span aria-hidden="true">→</span>
+              </button>
             </article>
           ))}
         </div>
