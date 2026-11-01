@@ -176,7 +176,7 @@ function checkLocalConflict(dados: TurmaFormData, ignoreId?: string): void {
         if (t.sala.trim().toLowerCase() === dados.sala.trim().toLowerCase()) {
           throw new ScheduleConflictError(
             `Conflito de horário detectado: a sala "${t.sala}" já está ocupada pela turma ${t.codigo} (${t.disciplina}) na ${t.diaSemana} das ${t.horarioInicio} às ${t.horarioFim}.`,
-            `Sala ocupada por ${t.codigo} (${t.horarioInicio} - ${t.horarioFim})`,
+            `Sala ocupada por ${t.codigo} (${t.horarioInicio} às ${t.horarioFim})`,
           );
         }
 
@@ -184,7 +184,7 @@ function checkLocalConflict(dados: TurmaFormData, ignoreId?: string): void {
         if (t.professor.trim().toLowerCase() === dados.professor.trim().toLowerCase()) {
           throw new ScheduleConflictError(
             `Conflito de horário detectado: o(a) docente "${t.professor}" já ministra aula na turma ${t.codigo} (${t.disciplina}) na ${t.diaSemana} das ${t.horarioInicio} às ${t.horarioFim}.`,
-            `Docente ocupado(a) na turma ${t.codigo} (${t.horarioInicio} - ${t.horarioFim})`,
+            `Docente ocupado(a) na turma ${t.codigo} (${t.horarioInicio} às ${t.horarioFim})`,
           );
         }
       }
@@ -201,7 +201,6 @@ export const turmaService = {
       const response = await api.get<Turma[]>('/turmas');
       return response.data;
     } catch (error) {
-      // Se a rota ainda não existir no backend, utiliza armazenamento local
       if (
         axios.isAxiosError(error) &&
         (error.response?.status === 404 || !error.response)
@@ -226,7 +225,7 @@ export const turmaService = {
       ) {
         const turma = getStoredTurmas().find((t) => t.id === id);
         if (!turma) {
-          throw new Error('Turma não encontrada.', { cause: error });
+          throw new Error('Turma não encontrada.');
         }
         return turma;
       }
@@ -240,7 +239,7 @@ export const turmaService = {
   async criar(dados: TurmaFormData, forcarSimulacaoConflito = false): Promise<Turma> {
     if (forcarSimulacaoConflito) {
       throw new ScheduleConflictError(
-        `Conflito de horário detectado: a sala "${dados.sala}" ou o(a) docente "${dados.professor}" possui choque de horário neste intervalo (${dados.diaSemana}, ${dados.horarioInicio} - ${dados.horarioFim}).`,
+        `Conflito de horário detectado: a sala "${dados.sala}" ou o(a) docente "${dados.professor}" possui choque de horário neste intervalo (${dados.diaSemana}, ${dados.horarioInicio} às ${dados.horarioFim}).`,
         'Simulação ativada para demonstração da regra de negócio.',
       );
     }
@@ -254,15 +253,13 @@ export const turmaService = {
           (axios.isAxiosError(error) &&
             (error.response?.data?.detail || error.response?.data?.message)) ||
           'Conflito de horário detectado para esta turma.';
-        throw new ScheduleConflictError(mensagemBackend, undefined, { cause: error });
+        throw new ScheduleConflictError(mensagemBackend);
       }
 
-      // Fallback local se backend não estiver respondendo
       if (
         axios.isAxiosError(error) &&
         (error.response?.status === 404 || !error.response)
       ) {
-        // Valida colisão localmente
         checkLocalConflict(dados);
 
         const turmas = getStoredTurmas();
@@ -290,7 +287,7 @@ export const turmaService = {
   ): Promise<Turma> {
     if (forcarSimulacaoConflito) {
       throw new ScheduleConflictError(
-        `Conflito de horário detectado: a sala "${dados.sala}" ou o(a) docente "${dados.professor}" possui choque de horário neste intervalo (${dados.diaSemana}, ${dados.horarioInicio} - ${dados.horarioFim}).`,
+        `Conflito de horário detectado: a sala "${dados.sala}" ou o(a) docente "${dados.professor}" possui choque de horário neste intervalo (${dados.diaSemana}, ${dados.horarioInicio} às ${dados.horarioFim}).`,
         'Simulação ativada para demonstração da regra de negócio.',
       );
     }
@@ -304,10 +301,9 @@ export const turmaService = {
           (axios.isAxiosError(error) &&
             (error.response?.data?.detail || error.response?.data?.message)) ||
           'Conflito de horário detectado para esta turma.';
-        throw new ScheduleConflictError(mensagemBackend, undefined, { cause: error });
+        throw new ScheduleConflictError(mensagemBackend);
       }
 
-      // Fallback local
       if (
         axios.isAxiosError(error) &&
         (error.response?.status === 404 || !error.response)
@@ -317,7 +313,7 @@ export const turmaService = {
         const turmas = getStoredTurmas();
         const index = turmas.findIndex((t) => t.id === id);
         if (index === -1) {
-          throw new Error('Turma não encontrada para edição.', { cause: error });
+          throw new Error('Turma não encontrada para edição.');
         }
 
         const turmaAtualizada: Turma = {
