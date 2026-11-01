@@ -1,0 +1,364 @@
+.consulta-academica {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.consulta-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.consulta-header h1 {
+  margin: 0.4rem 0 0.2rem;
+  font-size: clamp(1.8rem, 3.5vw, 2.4rem);
+  letter-spacing: -0.03em;
+  color: var(--blue-950);
+}
+
+.consulta-header p {
+  color: var(--muted);
+  margin: 0;
+}
+
+/* Indicadores de métricas no topo */
+.consulta-metricas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.metrica-card {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  box-shadow: 0 4px 16px rgba(3, 36, 71, 0.03);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.metrica-card__icone {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 48px;
+  background: var(--blue-50);
+  color: var(--blue-700);
+}
+
+.metrica-card__info small {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+}
+
+.metrica-card__info strong {
+  display: block;
+  font-size: 1.45rem;
+  color: var(--blue-950);
+  margin-top: 0.2rem;
+}
+
+/* Abas de visualização */
+.consulta-tabs {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 2px solid var(--line);
+  margin-bottom: 1.5rem;
+}
+
+.consulta-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.4rem;
+  background: transparent;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--muted);
+  transition: all 0.2s ease;
+}
+
+.consulta-tab-btn:hover {
+  color: var(--blue-800);
+  background: rgba(234, 244, 253, 0.4);
+}
+
+.consulta-tab-btn--active {
+  color: var(--blue-800);
+  border-bottom-color: var(--blue-800);
+}
+
+/* Filtros */
+.consulta-filtros {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.consulta-filtros .filtro-busca {
+  flex: 1 1 280px;
+  display: flex;
+  align-items: center;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0 0.85rem;
+}
+
+.consulta-filtros .filtro-busca input {
+  width: 100%;
+  border: 0;
+  height: 44px;
+  background: transparent;
+  outline: none;
+}
+
+.consulta-filtros select {
+  height: 44px;
+  padding: 0 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  color: var(--ink);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Tabela de Notas e Frequência */
+.tabela-card {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: 0 6px 20px rgba(3, 36, 71, 0.035);
+  overflow-x: auto;
+}
+
+.tabela-academica {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.tabela-academica th,
+.tabela-academica td {
+  padding: 1.1rem 1.25rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.tabela-academica th {
+  background: #f8fafc;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
+
+.tabela-academica tbody tr:hover {
+  background: #fafcff;
+}
+
+.tabela-academica tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.disc-codigo {
+  display: inline-block;
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: var(--blue-700);
+  background: var(--blue-50);
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  margin-bottom: 0.2rem;
+}
+
+.disc-nome {
+  font-weight: 750;
+  color: var(--ink);
+  font-size: 0.95rem;
+}
+
+.prof-nome {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 0.2rem;
+}
+
+.badge-nota {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.95rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 8px;
+}
+
+.badge-nota--boa {
+  color: #15803d;
+  background: #dcfce7;
+}
+
+.badge-nota--media {
+  color: #b45309;
+  background: #fef3c7;
+}
+
+.badge-nota--baixa {
+  color: #b91c1c;
+  background: #fee2e2;
+}
+
+.badge-nota--pendente {
+  color: #64748b;
+  background: #f1f5f9;
+}
+
+.badge-status {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 0.3rem 0.65rem;
+  border-radius: 20px;
+}
+
+.badge-status--matriculado {
+  color: #0369a1;
+  background: #e0f2fe;
+}
+
+.badge-status--aprovado {
+  color: #15803d;
+  background: #dcfce7;
+}
+
+.badge-status--reprovado {
+  color: #b91c1c;
+  background: #fee2e2;
+}
+
+.badge-status--trancado {
+  color: #64748b;
+  background: #f1f5f9;
+}
+
+/* Grade de Horários Semanal */
+.grade-horarios {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+}
+
+.coluna-dia {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 16px rgba(3, 36, 71, 0.03);
+}
+
+.coluna-dia__titulo {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--blue-950);
+  border-bottom: 2px solid var(--blue-50);
+  padding-bottom: 0.6rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.coluna-dia__badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: 12px;
+  background: var(--blue-50);
+  color: var(--blue-700);
+}
+
+.coluna-dia__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  flex: 1;
+}
+
+.card-aula {
+  background: #f8fafc;
+  border-left: 4px solid var(--blue-700);
+  border-radius: 0 8px 8px 0;
+  padding: 0.85rem;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.card-aula:hover {
+  background: var(--blue-50);
+  transform: translateX(2px);
+}
+
+.card-aula__horario {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: var(--blue-800);
+  margin-bottom: 0.35rem;
+}
+
+.card-aula__disciplina {
+  font-weight: 750;
+  font-size: 0.88rem;
+  color: var(--ink);
+  line-height: 1.35;
+}
+
+.card-aula__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.dia-vazio {
+  text-align: center;
+  padding: 2rem 0.5rem;
+  color: #94a3b8;
+  font-size: 0.82rem;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .consulta-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .grade-horarios {
+    grid-template-columns: 1fr;
+  }
+}
