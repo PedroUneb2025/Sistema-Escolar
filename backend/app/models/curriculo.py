@@ -30,10 +30,10 @@ class MatrizCurricular(Base):
     id_curso: Mapped[int] = mapped_column(ForeignKey("curso.id_curso"), nullable=False)
     versao_ano: Mapped[str] = mapped_column(String(10), nullable=False)
     carga_horaria_total: Mapped[int] = mapped_column(Integer, nullable=False)
-    # Há triggers no banco (trg_matriz_curricular_unica_ativa_bi/bu) garantindo
-    # que só uma matriz fique ativa por curso — não duplique essa regra na
-    # aplicação, só respeite-a (ex: ao ativar uma nova, as outras do mesmo
-    # curso são desativadas automaticamente pelo MySQL).
+    # Regra "só uma matriz ativa por curso": o MySQL não permite trigger
+    # modificando a própria tabela que a disparou (erro 1442), então essa
+    # regra é garantida na aplicação (ver api/routes/curriculo.py), não por
+    # trigger. As triggers originais do DBA foram removidas do banco.
     ativo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     curso: Mapped["Curso"] = relationship(lazy="joined")

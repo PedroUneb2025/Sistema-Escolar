@@ -27,6 +27,7 @@ TABELAS_GERENCIADAS = {
     "sala", "curso", "disciplina",
     "matriz_curricular", "matriz_disciplina",
     "turma", "matricula_turma",
+    "disciplina_prerequisito",
 }
 
 def include_object(object, name, type_, reflected, compare_to):

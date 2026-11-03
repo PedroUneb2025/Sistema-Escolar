@@ -104,3 +104,43 @@ def test_fluxo_matriz_e_disciplina(client, db_session):
 def test_sem_token_retorna_401(client):
     resp = client.get("/cursos")
     assert resp.status_code == 401
+
+
+def test_apenas_uma_matriz_ativa_por_curso(client, db_session):
+    _criar_usuario(db_session, "sec4@sga.edu", "SECRETARIA")
+    token = _token(client, "sec4@sga.edu")
+    headers = _auth_header(token)
+
+    curso = client.post(
+        "/cursos", json={"codigo": "DIR", "nome": "Direito", "grau": "Bacharelado"}, headers=headers
+    ).json()
+
+    matriz_2025 = client.post(
+        "/matrizes",
+        json={"id_curso": curso["id_curso"], "versao_ano": "2025", "carga_horaria_total": 3000, "ativo": True},
+        headers=headers,
+    ).json()
+    assert matriz_2025["ativo"] is True
+
+    matriz_2026 = client.post(
+        "/matrizes",
+        json={"id_curso": curso["id_curso"], "versao_ano": "2026", "carga_horaria_total": 3100, "ativo": True},
+        headers=headers,
+    ).json()
+    assert matriz_2026["ativo"] is True
+
+    # A matriz de 2025 deve ter sido desativada automaticamente.
+    matriz_2025_atualizada = client.get(f"/matrizes/{matriz_2025['id_matriz']}", headers=headers).json()
+    assert matriz_2025_atualizada["ativo"] is False
+
+
+def test_coordenacao_pode_gerir_curriculo(client, db_session):
+    _criar_usuario(db_session, "coord@sga.edu", "COORDENACAO")
+    token = _token(client, "coord@sga.edu")
+
+    resp = client.post(
+        "/cursos",
+        json={"codigo": "MAT", "nome": "Matemática", "grau": "Licenciatura"},
+        headers=_auth_header(token),
+    )
+    assert resp.status_code == 201

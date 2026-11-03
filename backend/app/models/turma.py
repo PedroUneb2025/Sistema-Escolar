@@ -1,7 +1,7 @@
 import enum
 from datetime import time
 
-from sqlalchemy import ForeignKey, Integer, Numeric, String, Time, UniqueConstraint
+from sqlalchemy import ForeignKey, Index, Integer, Numeric, String, Time, UniqueConstraint
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -30,6 +30,12 @@ class SituacaoMatricula(str, enum.Enum):
 
 class Turma(Base):
     __tablename__ = "turma"
+    # Índices criados pelo DBA (Sprint 3). Precisam estar declarados aqui, senão
+    # o Alembic (autogenerate) propõe apagá-los.
+    __table_args__ = (
+        Index("idx_turma_periodo_sala", "semestre_letivo", "dia_semana", "id_sala", "hora_inicio", "hora_fim"),
+        Index("idx_turma_professor_oferta", "semestre_letivo", "id_professor", "id_disciplina"),
+    )
 
     id_turma: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     id_disciplina: Mapped[int] = mapped_column(ForeignKey("disciplina.id_disciplina"), nullable=False)
@@ -52,7 +58,12 @@ class Turma(Base):
 
 class MatriculaTurma(Base):
     __tablename__ = "matricula_turma"
-    __table_args__ = (UniqueConstraint("id_aluno", "id_turma", name="uk_aluno_turma"),)
+    __table_args__ = (
+        UniqueConstraint("id_aluno", "id_turma", name="uk_aluno_turma"),
+        # Índices criados pelo DBA (Sprint 3), para relatórios e histórico do aluno.
+        Index("idx_matricula_turma_relatorio", "id_turma", "situacao", "frequencia"),
+        Index("idx_matricula_aluno_desempenho", "id_aluno", "situacao", "nota_final"),
+    )
 
     id_matricula_turma: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     id_aluno: Mapped[int] = mapped_column(ForeignKey("aluno.id_aluno"), nullable=False)

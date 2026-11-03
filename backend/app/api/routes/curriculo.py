@@ -25,8 +25,8 @@ router = APIRouter(tags=["curriculo"])
 # Quem pode ler a estrutura curricular: qualquer usuário autenticado
 # (aluno/professor consultam, secretaria/admin gerenciam).
 pode_ler = Depends(get_current_user)
-# Quem pode criar/editar/excluir: só secretaria e admin.
-pode_escrever = Depends(require_perfis("SECRETARIA", "ADMIN"))
+# Quem pode criar/editar/excluir: secretaria, coordenação e admin.
+pode_escrever = Depends(require_perfis("SECRETARIA", "COORDENACAO", "ADMIN"))
 
 
 def _buscar_ou_404(db: Session, model, pk_valor: int, pk_nome: str, rotulo: str):
@@ -172,6 +172,14 @@ def criar_matriz(dados: MatrizCurricularCreate, db: Session = Depends(get_db)):
     if db.get(Curso, dados.id_curso) is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Curso não encontrado")
 
+    # O MySQL não permite que uma trigger modifique a mesma tabela que a
+    # disparou (erro 1442), então essa regra de "só uma matriz ativa por
+    # curso" é garantida aqui, não por trigger.
+    if dados.ativo:
+        db.query(MatrizCurricular).filter(MatrizCurricular.id_curso == dados.id_curso).update(
+            {"ativo": False}
+        )
+
     matriz = MatrizCurricular(**dados.model_dump())
     db.add(matriz)
     try:
@@ -182,20 +190,24 @@ def criar_matriz(dados: MatrizCurricularCreate, db: Session = Depends(get_db)):
             status.HTTP_409_CONFLICT, "Já existe uma matriz com essa versão para este curso"
         )
     db.refresh(matriz)
-    # Nota: se 'ativo=True', o trigger do banco (trg_matriz_curricular_unica_ativa_bi)
-    # já desativa automaticamente as outras matrizes do mesmo curso.
     return matriz
 
 
 @router.put("/matrizes/{id_matriz}", response_model=MatrizCurricularRead, dependencies=[pode_escrever])
 def atualizar_matriz(id_matriz: int, dados: MatrizCurricularUpdate, db: Session = Depends(get_db)):
     matriz = _buscar_ou_404(db, MatrizCurricular, id_matriz, "id_matriz", "Matriz curricular")
-    for campo, valor in dados.model_dump(exclude_unset=True).items():
+
+    dados_novos = dados.model_dump(exclude_unset=True)
+    if dados_novos.get("ativo") is True and not matriz.ativo:
+        db.query(MatrizCurricular).filter(
+            MatrizCurricular.id_curso == matriz.id_curso,
+            MatrizCurricular.id_matriz != matriz.id_matriz,
+        ).update({"ativo": False})
+
+    for campo, valor in dados_novos.items():
         setattr(matriz, campo, valor)
     db.commit()
     db.refresh(matriz)
-    # Idem: ativar esta matriz (ativo=True) aciona o trigger de desativação
-    # automática das demais matrizes do mesmo curso.
     return matriz
 
 
