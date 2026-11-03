@@ -4,10 +4,9 @@ import type { UserRole } from '../types/auth';
 
 interface ProtectedRouteProps {
   allowedRoles?: UserRole[];
-  requireMFA?: boolean;
 }
 
-export function ProtectedRoute({ allowedRoles, requireMFA = true }: ProtectedRouteProps) {
+export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, user } = useAuth();
   const location = useLocation();
 
@@ -19,11 +18,7 @@ export function ProtectedRoute({ allowedRoles, requireMFA = true }: ProtectedRou
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 
-  if (requireMFA && !user.mfaVerified) {
-    return <Navigate to="/mfa-verification" replace state={{ from: location.pathname }} />;
-  }
-
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
+  if (allowedRoles && !allowedRoles.some((role) => user.perfis.includes(role))) {
     return <Navigate to="/unauthorized" replace />;
   }
 

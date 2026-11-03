@@ -1,95 +1,46 @@
-import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import type {
-  AuthContextValue,
-  AuthState,
-  LoginCredentials,
-  MFAChallenge,
-  User,
-} from '../types/auth';
+import { fetchCurrentUser, loginRequest, type MeResponse } from '../services/api';
+import type { AuthContextValue, AuthState, LoginCredentials, User, UserRole } from '../types/auth';
+
+import { DEMO_ENABLED, isDemoSession, startDemoSession, endDemoSession } from '../services/demoMode';
+import { getApiError } from '../services/apiError';
+
+const demoUser: User = { id: 'demo', email: 'secretaria@exemplo.com', status: 'ativo', perfis: ['secretaria'] };
+const demoAluno: User = { id: 'aluno-demo', email: 'aluno@uneb.br', nome: 'Aluno Demonstração', status: 'ativo', perfis: ['aluno'] };
+const demoDirecao: User = { id: 'direcao-demo', email: 'direcao@uneb.br', nome: 'Direção Acadêmica', status: 'ativo', perfis: ['admin', 'secretaria', 'coordenacao'] };
+
+function toUser(me: MeResponse): User {
+  if (!me || !me.id_usuario || !me.email || !Array.isArray(me.perfis) || me.status !== 'ativo') {
+    throw new Error('Usuário inválido ou inativo.');
+  }
+
+  const perfisFormatados = me.perfis.map((p) => {
+    const perfilLimpo = p.replace(/^ROLE_/i, '').toLowerCase();
+    return perfilLimpo as UserRole;
+  });
+
+  return {
+    id: String(me.id_usuario),
+    email: me.email,
+    status: me.status,
+    perfis: perfisFormatados,
+  };
+}
 
 const AUTH_STORAGE_KEYS = {
   token: '@UNEB:token',
   user: '@UNEB:user',
 } as const;
 
-const MFA_CODE = '123456';
-const MFA_DURATION = 5 * 60 * 1000;
-
-interface DemoAccount {
-  password: string;
-  user: Omit<User, 'mfaVerified'>;
-}
-
-const DEMO_ACCOUNTS: Record<string, DemoAccount> = {
-  'aluno@uneb.br': {
-    password: '123456',
-    user: {
-      id: '20260001',
-      nome: 'Maria Estudante',
-      email: 'aluno@uneb.br',
-      role: 'ALUNO',
-      curso: 'Sistemas de Informação',
-    },
-  },
-  'secretaria@uneb.br': {
-    password: '123456',
-    user: {
-      id: 'SEC-001',
-      nome: 'Ana Secretaria',
-      email: 'secretaria@uneb.br',
-      role: 'SECRETARIA',
-      curso: 'Secretaria Acadêmica',
-    },
-  },
-  'admin@uneb.br': {
-    password: '123456',
-    user: {
-      id: 'ADM-001',
-      nome: 'Carlos Administrador',
-      email: 'admin@uneb.br',
-      role: 'ADMIN',
-      curso: 'Administração do sistema',
-    },
-  },
-};
-
 const initialAuthState: AuthState = {
   user: null,
   token: null,
-  mfaChallenge: null,
   isAuthenticated: false,
   isLoading: true,
 };
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
-
-const delay = (milliseconds: number) =>
-  new Promise<void>((resolve) => window.setTimeout(resolve, milliseconds));
-
-function restoreStoredUser(value: string | null): User | null {
-  if (!value) return null;
-
-  try {
-    return JSON.parse(value) as User;
-  } catch {
-    return null;
-  }
-}
-
-function getStoredSession() {
-  const localToken = localStorage.getItem(AUTH_STORAGE_KEYS.token);
-  const localUser = restoreStoredUser(localStorage.getItem(AUTH_STORAGE_KEYS.user));
-
-  if (localToken && localUser) return { token: localToken, user: localUser };
-
-  const sessionToken = sessionStorage.getItem(AUTH_STORAGE_KEYS.token);
-  const sessionUser = restoreStoredUser(sessionStorage.getItem(AUTH_STORAGE_KEYS.user));
-
-  if (sessionToken && sessionUser) return { token: sessionToken, user: sessionUser };
-
-  return null;
-}
 
 function clearStoredSession() {
   localStorage.removeItem(AUTH_STORAGE_KEYS.token);
@@ -101,112 +52,129 @@ function clearStoredSession() {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>(initialAuthState);
 
-  useEffect(() => {
-    const storedSession = getStoredSession();
-
-    if (storedSession) {
-      setState({
-        user: storedSession.user,
-        token: storedSession.token,
-        mfaChallenge: null,
-        isAuthenticated: true,
-        isLoading: false,
-      });
-      return;
-    }
-
-    clearStoredSession();
-    setState({ ...initialAuthState, isLoading: false });
-  }, []);
-
-  const login = useCallback(async ({ email, password }: LoginCredentials) => {
-    setState((current) => ({ ...current, isLoading: true }));
-
-    try {
-      await delay(700);
-      const normalizedEmail = email.trim().toLowerCase();
-      const account = DEMO_ACCOUNTS[normalizedEmail];
-
-      if (!account || account.password !== password) {
-        throw new Error('E-mail ou senha incorretos. Confira os dados e tente novamente.');
-      }
-
-      const pendingUser: User = { ...account.user, mfaVerified: false };
-      const challenge: MFAChallenge = {
-        user: pendingUser,
-        token: `demo-token-${pendingUser.role.toLowerCase()}`,
-        maskedDestination: normalizedEmail.replace(/^(.{2}).*(@.*)$/, '$1••••$2'),
-        expiresAt: Date.now() + MFA_DURATION,
-      };
-
-      setState({
-        user: null,
-        token: null,
-        mfaChallenge: challenge,
-        isAuthenticated: false,
-        isLoading: false,
-      });
-
-      return { requiresMFA: true as const };
-    } catch (error) {
-      setState((current) => ({ ...current, isLoading: false }));
-      throw error;
-    }
-  }, []);
-
-  const verifyMFA = useCallback(
-    async (code: string, remember = false) => {
-      const challenge = state.mfaChallenge;
-      setState((current) => ({ ...current, isLoading: true }));
-
-      try {
-        await delay(600);
-
-        if (!challenge || Date.now() > challenge.expiresAt) {
-          throw new Error('O código expirou. Volte ao login para solicitar um novo.');
-        }
-
-        if (code !== MFA_CODE) {
-          throw new Error('Código de verificação inválido.');
-        }
-
-        const verifiedUser: User = { ...challenge.user, mfaVerified: true };
-        const storage = remember ? localStorage : sessionStorage;
-
-        clearStoredSession();
-        storage.setItem(AUTH_STORAGE_KEYS.token, challenge.token);
-        storage.setItem(AUTH_STORAGE_KEYS.user, JSON.stringify(verifiedUser));
-
-        setState({
-          user: verifiedUser,
-          token: challenge.token,
-          mfaChallenge: null,
-          isAuthenticated: true,
-          isLoading: false,
-        });
-
-        return verifiedUser;
-      } catch (error) {
-        setState((current) => ({ ...current, isLoading: false }));
-        throw error;
-      }
-    },
-    [state.mfaChallenge],
-  );
-
-  const cancelMFA = useCallback(() => {
-    setState((current) => ({ ...current, mfaChallenge: null, isLoading: false }));
-  }, []);
-
   const logout = useCallback(() => {
     clearStoredSession();
+    endDemoSession();
     setState({ ...initialAuthState, isLoading: false });
   }, []);
 
+  const loginDemo = useCallback(() => {
+    if (!DEMO_ENABLED) return;
+    clearStoredSession();
+    startDemoSession();
+    setState({ user: demoUser, token: null, isAuthenticated: true, isLoading: false });
+  }, []);
+
+  const loginDiretoAluno = useCallback(() => {
+    clearStoredSession();
+    sessionStorage.setItem(AUTH_STORAGE_KEYS.token, 'temp-token-aluno');
+    sessionStorage.setItem(AUTH_STORAGE_KEYS.user, JSON.stringify(demoAluno));
+    setState({ user: demoAluno, token: 'temp-token-aluno', isAuthenticated: true, isLoading: false });
+  }, []);
+
+  const loginDiretoDirecao = useCallback(() => {
+    clearStoredSession();
+    sessionStorage.setItem(AUTH_STORAGE_KEYS.token, 'temp-token-direcao');
+    sessionStorage.setItem(AUTH_STORAGE_KEYS.user, JSON.stringify(demoDirecao));
+    setState({ user: demoDirecao, token: 'temp-token-direcao', isAuthenticated: true, isLoading: false });
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    const token = sessionStorage.getItem(AUTH_STORAGE_KEYS.token) ?? localStorage.getItem(AUTH_STORAGE_KEYS.token);
+    const storedUserRaw = sessionStorage.getItem(AUTH_STORAGE_KEYS.user) ?? localStorage.getItem(AUTH_STORAGE_KEYS.user);
+    
+    window.addEventListener('auth:expired', logout);
+
+    if (token?.startsWith('temp-token-') && storedUserRaw) {
+      try {
+        const parsed = JSON.parse(storedUserRaw) as User;
+        setState({ user: parsed, token, isAuthenticated: true, isLoading: false });
+        return;
+      } catch {
+        // ignora e continua
+      }
+    }
+
+    if (isDemoSession()) {
+      setState({ user: demoUser, token: null, isAuthenticated: true, isLoading: false });
+    } else if (token && !token.startsWith('mock-')) {
+      fetchCurrentUser()
+        .then((me) => {
+          if (active) setState({ user: toUser(me), token, isAuthenticated: true, isLoading: false });
+        })
+        .catch(() => {
+          if (active) logout();
+        });
+    } else {
+      logout();
+    }
+
+    return () => {
+      active = false;
+      window.removeEventListener('auth:expired', logout);
+    };
+  }, [logout]);
+
+  const login = useCallback(
+    async ({ email, password, remember = false }: LoginCredentials) => {
+      endDemoSession();
+      clearStoredSession();
+      setState({ ...initialAuthState, isLoading: true });
+
+      try {
+        const { access_token: token } = await loginRequest(email.trim(), password);
+
+        if (!token || typeof token !== 'string') {
+          throw new Error('Resposta de autenticação inválida.');
+        }
+
+        const storage = remember ? localStorage : sessionStorage;
+        storage.setItem(AUTH_STORAGE_KEYS.token, token);
+
+        const meData = await fetchCurrentUser();
+        const user = toUser(meData);
+        
+        storage.setItem(AUTH_STORAGE_KEYS.user, JSON.stringify(user));
+        
+        setState({ user, token, isAuthenticated: true, isLoading: false });
+        return user;
+      } catch (error) {
+        logout();
+        throw new Error(getApiError(error, 'Não foi possível entrar. Tente novamente.'), { cause: error });
+      }
+    },
+    [logout],
+  );
+
+  const temPerfil = useCallback(
+    (perfilRequerido: UserRole): boolean => {
+      if (!state.user?.perfis) return false;
+      return state.user.perfis.includes(perfilRequerido);
+    },
+    [state.user],
+  );
+
+  const temAlgumPerfil = useCallback(
+    (perfisPermitidos: UserRole[]): boolean => {
+      if (!state.user?.perfis) return false;
+      return state.user.perfis.some((p) => perfisPermitidos.includes(p));
+    },
+    [state.user],
+  );
+
   const value = useMemo<AuthContextValue>(
-    () => ({ ...state, login, verifyMFA, cancelMFA, logout }),
-    [cancelMFA, login, logout, state, verifyMFA],
+    () => ({ ...state, login, loginDemo, loginDiretoAluno, loginDiretoDirecao, logout, temPerfil, temAlgumPerfil }),
+    [login, loginDemo, loginDiretoAluno, loginDiretoDirecao, logout, temPerfil, temAlgumPerfil, state],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
+  }
+  return context;
+};  

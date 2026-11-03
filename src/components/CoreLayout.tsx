@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { isDemoSession } from '../services/demoMode';
 import { Icon } from './Icon';
 import type { IconName } from './Icon';
 
@@ -13,29 +14,48 @@ interface NavigationItem {
 
 const studentNavigation: NavigationItem[] = [
   { to: '/aluno/dashboard', label: 'Início', icon: 'home', end: true },
-  { to: '/aluno/dashboard', label: 'Notas e frequência', icon: 'chart' },
-  { to: '/aluno/dashboard', label: 'Horários', icon: 'calendar' },
+  { to: '/aluno/consulta', label: 'Consulta acadêmica (Notas & Horários)', icon: 'chart' },
   { to: '/aluno/dashboard', label: 'Documentos', icon: 'file' },
 ];
 
 const staffNavigation: NavigationItem[] = [
   { to: '/secretaria/gestao', label: 'Visão geral', icon: 'home', end: true },
   { to: '/secretaria/gestao', label: 'Alunos', icon: 'users' },
-  { to: '/secretaria/gestao', label: 'Turmas e disciplinas', icon: 'book' },
+  { to: '/turmas', label: 'Turmas e disciplinas', icon: 'book' },
   { to: '/secretaria/gestao', label: 'Configurações', icon: 'settings' },
 ];
 
-const roleLabels = {
-  ALUNO: 'Estudante',
-  PROFESSOR: 'Professor',
-  SECRETARIA: 'Secretaria',
-  ADMIN: 'Administrador',
+const roleLabels: Record<string, string> = {
+  admin: 'Administrador',
+  secretaria: 'Secretaria',
+  coordenacao: 'Coordenação',
+  professor: 'Professor',
+  aluno: 'Estudante',
+  financeiro: 'Financeiro',
 };
+
+
+function getDisplayName(email: string | undefined) {
+  if (!email) return '';
+  const [handle] = email.split('@');
+  return handle.charAt(0).toUpperCase() + handle.slice(1);
+}
+
+function getPrimaryRoleLabel(perfis: string[] | undefined) {
+  const perfil = perfis?.[0];
+  return perfil ? (roleLabels[perfil] ?? perfil) : '';
+}
 
 export function CoreLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { logout, user } = useAuth();
-  const navigation = user?.role === 'ALUNO' ? studentNavigation : staffNavigation;
+  const canManageCurriculum = user?.perfis.some((role) => ['admin', 'secretaria', 'coordenacao'].includes(role));
+  const navigation = canManageCurriculum ? [...staffNavigation,
+    { to: '/curriculo/cursos', label: 'Cursos', icon: 'book' as const },
+    { to: '/curriculo/disciplinas', label: 'Disciplinas', icon: 'book' as const },
+    { to: '/curriculo/matrizes', label: 'Matrizes curriculares', icon: 'book' as const },
+  ] : user?.perfis.includes('aluno') ? studentNavigation : staffNavigation;
+  const displayName = getDisplayName(user?.email);
 
   useEffect(() => {
     document.body.style.overflow = isSidebarOpen ? 'hidden' : '';
@@ -83,7 +103,7 @@ export function CoreLayout() {
               to={item.to}
               end={item.end}
               onClick={() => setIsSidebarOpen(false)}
-              className={({ isActive }) => `sidebar-link ${isActive && index === 0 ? 'sidebar-link--active' : ''}`}
+              className={({ isActive }) => `sidebar-link ${isActive && (index === 0 || item.to === '/aluno/consulta' || item.to === '/turmas' || item.to.startsWith('/curriculo/')) ? 'sidebar-link--active' : ''}`}
             >
               <Icon name={item.icon} />
               <span>{item.label}</span>
@@ -93,8 +113,8 @@ export function CoreLayout() {
 
         <div className="sidebar__footer">
           <div className="sidebar-profile">
-            <span className="sidebar-profile__avatar" aria-hidden="true">{user?.nome.charAt(0)}</span>
-            <div><strong>{user?.nome}</strong><small>{user?.curso}</small></div>
+            <span className="sidebar-profile__avatar" aria-hidden="true">{displayName.charAt(0)}</span>
+            <div><strong>{displayName}</strong><small>{getPrimaryRoleLabel(user?.perfis)}</small></div>
           </div>
           <button className="logout-button" type="button" onClick={logout}>
             <Icon name="logout" /><span>Sair da conta</span>
@@ -131,15 +151,18 @@ export function CoreLayout() {
               <Icon name="bell" /><span aria-hidden="true" />
             </button>
             <div className="user-summary">
-              <span className="user-summary__avatar" aria-hidden="true">{user?.nome.charAt(0)}</span>
+              <span className="user-summary__avatar" aria-hidden="true">{displayName.charAt(0)}</span>
               <span className="user-summary__text">
-                <strong>{user?.nome}</strong><small>{user ? roleLabels[user.role] : ''}</small>
+                <strong>{displayName}</strong><small>{getPrimaryRoleLabel(user?.perfis)}</small>
               </span>
             </div>
           </div>
         </header>
 
-        <main className="app-content" id="main-content" tabIndex={-1}><Outlet /></main>
+        <main className="app-content" id="main-content" tabIndex={-1}>
+          {isDemoSession() && <div className="form-alert" role="status">Modo de teste — dados fictícios salvos somente nesta aba. Ao sair da conta, os testes serão apagados.</div>}
+          <Outlet />
+        </main>
 
         <footer className="app-footer">
           <p>© 2026 UNEB · Campus II — Alagoinhas</p>
