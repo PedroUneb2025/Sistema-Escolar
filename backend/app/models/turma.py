@@ -20,6 +20,12 @@ class DiaSemana(str, enum.Enum):
     SAB = "SAB"
 
 
+class StatusTurma(str, enum.Enum):
+    aberta = "aberta"
+    fechada = "fechada"
+    cancelada = "cancelada"
+
+
 class SituacaoMatricula(str, enum.Enum):
     matriculado = "matriculado"
     aprovado = "aprovado"
@@ -50,6 +56,13 @@ class Turma(Base):
     hora_inicio: Mapped[time] = mapped_column(Time, nullable=False)
     hora_fim: Mapped[time] = mapped_column(Time, nullable=False)
     vagas_totais: Mapped[int] = mapped_column(Integer, nullable=False)
+    # Coluna pedida ao DBA: ENUM('aberta','fechada','cancelada') NOT NULL DEFAULT 'aberta'.
+    status: Mapped[StatusTurma] = mapped_column(
+        SAEnum(StatusTurma, native_enum=True, values_callable=lambda e: [m.value for m in e]),
+        nullable=False,
+        default=StatusTurma.aberta,
+        server_default=StatusTurma.aberta.value,
+    )
 
     disciplina: Mapped[Disciplina] = relationship(lazy="joined")
     professor: Mapped[Professor] = relationship(lazy="joined")

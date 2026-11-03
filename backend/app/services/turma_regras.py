@@ -11,6 +11,13 @@ DIAS_SEMANA = (
 )
 STATUS_TURMA = ("aberta", "fechada", "cancelada")
 
+# O banco guarda o dia como SEG..SAB (enum DiaSemana); o front usa por extenso.
+DIA_EXTENSO_PARA_CODIGO = {
+    "Segunda-feira": "SEG", "Terça-feira": "TER", "Quarta-feira": "QUA",
+    "Quinta-feira": "QUI", "Sexta-feira": "SEX", "Sábado": "SAB",
+}
+DIA_CODIGO_PARA_EXTENSO = {v: k for k, v in DIA_EXTENSO_PARA_CODIGO.items()}
+
 
 class RegraTurmaError(Exception):
     """Erro de regra de negócio; `status_code` é o HTTP a devolver."""

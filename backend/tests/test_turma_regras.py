@@ -119,3 +119,11 @@ def test_calcular_vagas():
     assert calcular_vagas(40, 28) == {
         "vagasTotais": 40, "vagasOcupadas": 28, "vagasDisponiveis": 12}
     assert calcular_vagas(10, 12)["vagasDisponiveis"] == 0
+
+
+def test_mapa_de_dias_e_reversivel():
+    from app.services.turma_regras import (
+        DIA_CODIGO_PARA_EXTENSO, DIA_EXTENSO_PARA_CODIGO, DIAS_SEMANA)
+    assert set(DIA_EXTENSO_PARA_CODIGO) == set(DIAS_SEMANA)
+    assert DIA_EXTENSO_PARA_CODIGO["Segunda-feira"] == "SEG"
+    assert DIA_CODIGO_PARA_EXTENSO["SAB"] == "Sábado"
