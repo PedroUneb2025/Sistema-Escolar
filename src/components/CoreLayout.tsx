@@ -14,6 +14,7 @@ interface NavigationItem {
 
 const studentNavigation: NavigationItem[] = [
   { to: '/aluno/dashboard', label: 'Início', icon: 'home', end: true },
+  { to: '/aluno/matriculas', label: 'Matrícula online', icon: 'book' },
   { to: '/aluno/consulta', label: 'Consulta acadêmica (Notas & Horários)', icon: 'chart' },
   { to: '/aluno/dashboard', label: 'Documentos', icon: 'file' },
 ];
@@ -103,7 +104,7 @@ export function CoreLayout() {
               to={item.to}
               end={item.end}
               onClick={() => setIsSidebarOpen(false)}
-              className={({ isActive }) => `sidebar-link ${isActive && (index === 0 || item.to === '/aluno/consulta' || item.to === '/turmas' || item.to.startsWith('/curriculo/')) ? 'sidebar-link--active' : ''}`}
+              className={({ isActive }) => `sidebar-link ${isActive && (index === 0 || item.to === '/aluno/consulta' || item.to === '/turmas' || item.to.startsWith('/curriculo/') || item.to === '/aluno/matriculas') ? 'sidebar-link--active' : ''}`}
             >
               <Icon name={item.icon} />
               <span>{item.label}</span>

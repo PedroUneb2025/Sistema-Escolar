@@ -25,16 +25,8 @@ export const turmaSchema = z
       .trim()
       .min(3, 'O código da turma deve ter no mínimo 3 caracteres (ex: MAT0101-T01).')
       .max(20, 'O código da turma deve ter no máximo 20 caracteres.'),
-    disciplina: z
-      .string()
-      .trim()
-      .min(3, 'O nome da disciplina deve ter pelo menos 3 caracteres.')
-      .max(100, 'O nome da disciplina deve ter no máximo 100 caracteres.'),
-    professor: z
-      .string()
-      .trim()
-      .min(3, 'O nome do professor/docente é obrigatório.')
-      .max(80, 'O nome do professor deve ter no máximo 80 caracteres.'),
+    idDisciplina: z.number().int().positive('Selecione uma opção.'),
+    idProfessor: z.number().int().positive('Selecione uma opção.'),
     semestre: z
       .string()
       .trim()
@@ -48,10 +40,7 @@ export const turmaSchema = z
     horarioFim: z
       .string()
       .regex(timeRegex, 'Horário final inválido. Use o formato HH:MM (ex: 10:00).'),
-    sala: z
-      .string()
-      .trim()
-      .min(2, 'Informe a sala ou laboratório (ex: Pavilhão 2 - Sala 104).'),
+    idSala: z.number().int().positive('Selecione uma opção.'),
     vagas: z
       .number({ message: 'Informe uma quantidade válida de vagas.' })
       .int('A quantidade de vagas deve ser um número inteiro.')

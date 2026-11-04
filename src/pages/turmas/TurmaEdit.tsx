@@ -38,11 +38,11 @@ export function TurmaEdit() {
     carregarTurma();
   }, [id]);
 
-  const handleUpdateTurma = async (data: TurmaFormData, simularConflito: boolean) => {
+  const handleUpdateTurma = async (data: TurmaFormData) => {
     if (!id) return;
     setIsSubmitting(true);
     try {
-      await turmaService.atualizar(id, data, simularConflito);
+      await turmaService.atualizar(id, data);
       navigate('/turmas', {
         state: {
           mensagemSucesso: `Turma ${data.codigo} atualizada com sucesso!`,
@@ -79,13 +79,13 @@ export function TurmaEdit() {
 
   const initialData: TurmaFormData = {
     codigo: turma.codigo,
-    disciplina: turma.disciplina,
-    professor: turma.professor,
+    idDisciplina: turma.idDisciplina ?? 0,
+    idProfessor: turma.idProfessor ?? 0,
     semestre: turma.semestre,
     diaSemana: turma.diaSemana,
     horarioInicio: turma.horarioInicio,
     horarioFim: turma.horarioFim,
-    sala: turma.sala,
+    idSala: turma.idSala ?? 0,
     vagas: turma.vagas,
     status: turma.status,
   };

@@ -8,10 +8,10 @@ export function TurmaCreate() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  const handleCreateTurma = async (data: TurmaFormData, simularConflito: boolean) => {
+  const handleCreateTurma = async (data: TurmaFormData) => {
     setIsSubmitting(true);
     try {
-      await turmaService.criar(data, simularConflito);
+      await turmaService.criar(data);
       navigate('/turmas', {
         state: {
           mensagemSucesso: `Turma ${data.codigo} cadastrada com sucesso!`,
