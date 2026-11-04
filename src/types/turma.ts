@@ -10,6 +10,9 @@ export type StatusTurma = 'aberta' | 'fechada' | 'cancelada';
 
 export interface Turma {
   id: string;
+  idDisciplina?: number;
+  idProfessor?: number;
+  idSala?: number;
   codigo: string;          // Ex: "MAT0123-T01"
   disciplina: string;      // Ex: "Cálculo Diferencial e Integral I"
   professor: string;       // Ex: "Prof. Dr. Carlos Eduardo"
@@ -23,7 +26,7 @@ export interface Turma {
   status: StatusTurma;
 }
 
-export type TurmaFormData = Omit<Turma, 'id' | 'vagasOcupadas'>;
+export type TurmaFormData = Omit<Turma, 'id' | 'vagasOcupadas' | 'disciplina' | 'professor' | 'sala' | 'idDisciplina' | 'idProfessor' | 'idSala'> & { idDisciplina: number; idProfessor: number; idSala: number };
 
 export interface TurmaFiltros {
   busca: string;

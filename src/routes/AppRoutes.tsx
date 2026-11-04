@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { CoreLayout } from '../components/CoreLayout';
+import { MatriculaOnline } from '../pages/matriculas/MatriculaOnline';
 import { DashboardAluno } from '../pages/DashboardAluno';
 import { GestaoSecretaria } from '../pages/GestaoSecretaria';
 import { Login } from '../pages/Login';
@@ -24,6 +25,7 @@ export function AppRoutes() {
       <Route element={<ProtectedRoute allowedRoles={['aluno']} />}>
         <Route element={<CoreLayout />}>
           <Route path="/aluno/dashboard" element={<DashboardAluno />} />
+          <Route path="/aluno/matriculas" element={<MatriculaOnline />} />
         </Route>
       </Route>
 

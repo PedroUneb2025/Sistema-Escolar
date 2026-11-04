@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link } from 'react-router-dom';
@@ -6,7 +6,8 @@ import { Icon } from '../../components/Icon';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { turmaSchema, type TurmaSchemaInput } from '../../schemas/turmaSchema';
 import type { DiaSemana, StatusTurma, TurmaFormData } from '../../types/turma';
-import { isScheduleConflictError } from '../../services/turmaService';
+import { getApiError } from '../../services/apiError';
+import { turmaService, type OpcoesTurma, isScheduleConflictError } from '../../services/turmaService';
 
 const DIAS_SEMANA: DiaSemana[] = [
   'Segunda-feira',
@@ -25,7 +26,7 @@ const STATUS_OPCOES: { valor: StatusTurma; label: string }[] = [
 
 interface TurmaFormProps {
   initialData?: TurmaFormData;
-  onSubmit: (data: TurmaFormData, simularConflito: boolean) => Promise<void>;
+  onSubmit: (data: TurmaFormData) => Promise<void>;
   isSubmitting: boolean;
   submitButtonText: string;
   formTitle: string;
@@ -43,47 +44,63 @@ export function TurmaForm({
   // Estado para a Regra de Negócio: Conflito de Horário
   const [conflitoHorarioErro, setConflitoHorarioErro] = useState<string | null>(null);
   const [erroGenerico, setErroGenerico] = useState<string | null>(null);
-  const [simularConflito, setSimularConflito] = useState(false);
+  const [opcoes, setOpcoes] = useState<OpcoesTurma | null>(null);
+  const [erroOpcoes, setErroOpcoes] = useState('');
+  const [tentativa, setTentativa] = useState(0);
+  useEffect(() => {
+    const controller = new AbortController();
+    turmaService.opcoes(controller.signal).then(data => {
+      if (!controller.signal.aborted) { setOpcoes(data); setErroOpcoes(''); }
+    }).catch(error => {
+      if (!controller.signal.aborted) setErroOpcoes(getApiError(error, 'Não foi possível carregar disciplinas, professores e salas.'));
+    });
+    return () => controller.abort();
+  }, [tentativa]);
+  const podeSalvar = !!opcoes?.disciplinas.length && !!opcoes?.professores.length && !!opcoes?.salas.length;
+
 
   const {
     register,
+    reset,
     handleSubmit,
     formState: { errors },
   } = useForm<TurmaSchemaInput>({
     resolver: zodResolver(turmaSchema),
     defaultValues: initialData ?? {
       codigo: '',
-      disciplina: '',
-      professor: '',
+      idDisciplina: 0,
+      idProfessor: 0,
       semestre: '2026.1',
       diaSemana: 'Segunda-feira',
       horarioInicio: '08:00',
       horarioFim: '10:00',
-      sala: '',
+      idSala: 0,
       vagas: 40,
       status: 'aberta',
     },
   });
+
+  useEffect(() => {
+    if (opcoes && initialData) reset(initialData);
+  }, [opcoes, initialData, reset]);
 
   const handleFormSubmit = async (data: TurmaSchemaInput) => {
     setConflitoHorarioErro(null);
     setErroGenerico(null);
 
     try {
-      await onSubmit(data as TurmaFormData, simularConflito);
+      await onSubmit(data as TurmaFormData);
     } catch (error) {
       if (isScheduleConflictError(error)) {
         // REGRA DE NEGÓCIO: Trata especificamente o erro de conflito de horário
         const mensagem =
           error instanceof Error
-            ? error.message
+            ? getApiError(error, error.message)
             : 'Conflito de horário detectado: a sala ou o docente já possui aula neste mesmo horário.';
         setConflitoHorarioErro(mensagem);
       } else {
         setErroGenerico(
-          error instanceof Error
-            ? error.message
-            : 'Ocorreu um erro ao processar a turma. Tente novamente.',
+          getApiError(error, 'Ocorreu um erro ao processar a turma. Tente novamente.'),
         );
       }
     }
@@ -145,6 +162,9 @@ export function TurmaForm({
         </div>
       )}
 
+      {erroOpcoes ? <div role="alert">{erroOpcoes} <button type="button" onClick={() => setTentativa(n => n + 1)}>Tentar novamente</button></div>
+        : !opcoes ? <p role="status">Carregando opções...</p>
+        : !podeSalvar ? <p role="alert">Cadastre disciplinas, professores e salas antes de salvar a turma.</p> : null}
       <form onSubmit={handleSubmit(handleFormSubmit)} className="turma-form" noValidate>
         {/* Seção 1: Dados Acadêmicos */}
         <fieldset className="form-section">
@@ -188,30 +208,26 @@ export function TurmaForm({
               <label htmlFor="disciplina">
                 Nome da Disciplina <span className="required-mark">*</span>
               </label>
-              <div className={`input-shell ${errors.disciplina ? 'input-shell--error' : ''}`}>
-                <input
-                  id="disciplina"
-                  type="text"
-                  placeholder="Ex: Estruturas de Dados e Algoritmos"
-                  {...register('disciplina')}
-                />
+              <div className={`select-shell ${errors.idDisciplina ? 'input-shell--error' : ''}`}>
+                <select id="disciplina" {...register('idDisciplina', { valueAsNumber: true })} disabled={!opcoes}>
+                  <option value="0">Selecione...</option>
+                  {opcoes?.disciplinas.map(item => <option key={item.id_disciplina} value={item.id_disciplina}>{item.nome}</option>)}
+                </select>
               </div>
-              {errors.disciplina && <p className="field-error">{errors.disciplina.message}</p>}
+              {errors.idDisciplina && <p className="field-error">{errors.idDisciplina.message}</p>}
             </div>
 
             <div className="form-group">
               <label htmlFor="professor">
                 Professor(a) / Docente <span className="required-mark">*</span>
               </label>
-              <div className={`input-shell ${errors.professor ? 'input-shell--error' : ''}`}>
-                <input
-                  id="professor"
-                  type="text"
-                  placeholder="Ex: Prof. Dr. Carlos Eduardo"
-                  {...register('professor')}
-                />
+              <div className={`select-shell ${errors.idProfessor ? 'input-shell--error' : ''}`}>
+                <select id="professor" {...register('idProfessor', { valueAsNumber: true })} disabled={!opcoes}>
+                  <option value="0">Selecione...</option>
+                  {opcoes?.professores.map(item => <option key={item.id_professor} value={item.id_professor}>{item.nome_completo}</option>)}
+                </select>
               </div>
-              {errors.professor && <p className="field-error">{errors.professor.message}</p>}
+              {errors.idProfessor && <p className="field-error">{errors.idProfessor.message}</p>}
             </div>
           </div>
         </fieldset>
@@ -264,15 +280,13 @@ export function TurmaForm({
             <label htmlFor="sala">
               Sala / Laboratório <span className="required-mark">*</span>
             </label>
-            <div className={`input-shell ${errors.sala ? 'input-shell--error' : ''}`}>
-              <input
-                id="sala"
-                type="text"
-                placeholder="Ex: Pavilhão 2 - Sala 104 ou Laboratório de Informática 3"
-                {...register('sala')}
-              />
+            <div className={`select-shell ${errors.idSala ? 'input-shell--error' : ''}`}>
+              <select id="sala" {...register('idSala', { valueAsNumber: true })} disabled={!opcoes}>
+                  <option value="0">Selecione...</option>
+                  {opcoes?.salas.map(item => <option key={item.id_sala} value={item.id_sala}>{item.codigo}</option>)}
+                </select>
             </div>
-            {errors.sala && <p className="field-error">{errors.sala.message}</p>}
+            {errors.idSala && <p className="field-error">{errors.idSala.message}</p>}
             <p className="field-help">Espaço físico no campus destinado às aulas da turma.</p>
           </div>
         </fieldset>
@@ -316,27 +330,11 @@ export function TurmaForm({
           </div>
         </fieldset>
 
-        {/* Utilitário para facilitar a validação da Regra de Negócio durante testes acadêmicos */}
-        <div className="simulation-box">
-          <label className="checkbox-field" htmlFor="simularConflito">
-            <input
-              id="simularConflito"
-              type="checkbox"
-              checked={simularConflito}
-              onChange={(e) => setSimularConflito(e.target.checked)}
-            />
-            <span>
-              <strong>Modo de teste:</strong> Forçar erro de validação de 'conflito de horário'
-              ao submeter para testar o alerta visual.
-            </span>
-          </label>
-        </div>
-
         <div className="form-actions">
           <Link to="/turmas" className="secondary-button">
             Cancelar
           </Link>
-          <button type="submit" className="primary-button" disabled={isSubmitting}>
+          <button type="submit" className="primary-button" disabled={isSubmitting || !podeSalvar}>
             {isSubmitting ? (
               <>
                 <LoadingSpinner />

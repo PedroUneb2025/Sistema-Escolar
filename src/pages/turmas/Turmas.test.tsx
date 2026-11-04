@@ -1,15 +1,22 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TurmasList } from './TurmasList';
+import { TurmaForm } from './TurmaForm';
 import { TurmaCreate } from './TurmaCreate';
+import { api } from '../../services/api';
 import { turmaService, ScheduleConflictError } from '../../services/turmaService';
 
 describe('Módulo de Turmas (CRUD)', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
-    turmaService.restaurarDadosPadrao();
+    vi.spyOn(api, 'get').mockImplementation(async (url) => ({ data: url === '/turmas' ? [
+      { id: '1', codigo: 'MAT0123-T01', disciplina: 'Cálculo Diferencial e Integral I', professor: 'Prof. Dr. Carlos Eduardo', semestre: '2026.1', diaSemana: 'Segunda-feira', horarioInicio: '08:00', horarioFim: '10:00', sala: 'Sala 1', vagas: 40, vagasOcupadas: 3, status: 'aberta' },
+      { id: '2', codigo: 'INF-T01', disciplina: 'Estruturas de Dados e Algoritmos', professor: 'Ana', semestre: '2026.1', diaSemana: 'Terça-feira', horarioInicio: '08:00', horarioFim: '10:00', sala: 'Sala 2', vagas: 40, vagasOcupadas: 0, status: 'aberta' },
+    ] : url === '/disciplinas' ? [{ id_disciplina: 1, nome: 'Cálculo', codigo: 'CALC' }]
+    : url === '/professores' ? [{ id_professor: 2, nome_completo: 'Ana' }]
+    : [{ id_sala: 3, codigo: 'Sala 1' }] }));
   });
 
   it('renderiza a lista de turmas com dados e métricas', async () => {
@@ -59,6 +66,18 @@ describe('Módulo de Turmas (CRUD)', () => {
     expect(screen.getByRole('button', { name: 'Sim, excluir turma' })).toBeVisible();
   });
 
+  it('preserva os IDs na edição após carregar os selects', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    const dados = { codigo: 'CALC-T01', idDisciplina: 1, idProfessor: 2, idSala: 3, semestre: '2026.2', diaSemana: 'Segunda-feira' as const, horarioInicio: '08:00', horarioFim: '10:00', vagas: 30, status: 'aberta' as const };
+    render(<MemoryRouter><TurmaForm initialData={dados} onSubmit={onSubmit} isSubmitting={false} submitButtonText="Salvar" formTitle="Editar" formSubtitle="Turma" /></MemoryRouter>);
+    await screen.findByRole('option', { name: 'Cálculo' });
+    expect(screen.getByLabelText(/Nome da Disciplina/i)).toHaveValue('1');
+    expect(screen.getByLabelText(/Professor\(a\)/i)).toHaveValue('2');
+    expect(screen.getByLabelText(/Sala \/ Laboratório/i)).toHaveValue('3');
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Salvar' }));
+    expect(onSubmit).toHaveBeenCalledWith(dados);
+  });
+
   describe('Regra de Negócio: Tratamento de Conflito de Horário', () => {
     it('exibe alerta visual claro de conflito de horário quando a API retorna erro de validação', async () => {
       // Mock do turmaService.criar para simular o retorno de conflito do backend
@@ -79,9 +98,10 @@ describe('Módulo de Turmas (CRUD)', () => {
 
       // Preenche os campos do formulário
       await user.type(screen.getByLabelText(/Código da Turma/i), 'MAT0123-T02');
-      await user.type(screen.getByLabelText(/Nome da Disciplina/i), 'Cálculo Diferencial');
-      await user.type(screen.getByLabelText(/Professor\(a\) \/ Docente/i), 'Prof. Dr. Roberto');
-      await user.type(screen.getByLabelText(/Sala \/ Laboratório/i), 'Pavilhão 2 - Sala 104');
+      await screen.findByRole('option', { name: 'Cálculo' });
+      await user.selectOptions(screen.getByLabelText(/Nome da Disciplina/i), '1');
+      await user.selectOptions(screen.getByLabelText(/Professor\(a\) \/ Docente/i), '2');
+      await user.selectOptions(screen.getByLabelText(/Sala \/ Laboratório/i), '3');
 
       // Submete o formulário
       const botaoSubmit = screen.getByRole('button', { name: 'Cadastrar Turma' });
@@ -99,33 +119,12 @@ describe('Módulo de Turmas (CRUD)', () => {
       expect(screen.getByText('Como resolver:')).toBeVisible();
     });
 
-    it('exibe alerta visual quando o usuário aciona a simulação de conflito de horário no modo de teste', async () => {
-      const user = userEvent.setup();
-      render(
-        <MemoryRouter initialEntries={['/turmas/nova']}>
-          <Routes>
-            <Route path="/turmas/nova" element={<TurmaCreate />} />
-          </Routes>
-        </MemoryRouter>,
-      );
-
-      await user.type(screen.getByLabelText(/Código da Turma/i), 'MAT0999-T01');
-      await user.type(screen.getByLabelText(/Nome da Disciplina/i), 'Geometria Analítica');
-      await user.type(screen.getByLabelText(/Professor\(a\) \/ Docente/i), 'Profa. Dra. Elena');
-      await user.type(screen.getByLabelText(/Sala \/ Laboratório/i), 'Sala 101');
-
-      // Ativa o checkbox de teste de conflito de horário
-      const checkboxSimular = screen.getByLabelText(/Forçar erro de validação de 'conflito de horário'/i);
-      await user.click(checkboxSimular);
-
-      // Submete
-      await user.click(screen.getByRole('button', { name: 'Cadastrar Turma' }));
-
-      // REGRA DE NEGÓCIO: Confirma que o alerta visual foi renderizado na tela
-      await waitFor(() => {
-        expect(screen.getByTestId('conflict-schedule-alert')).toBeVisible();
-      });
-      expect(screen.getByText('Aviso: Conflito de Horário Detectado')).toBeVisible();
+    it('envia os IDs reais e não simula sucesso quando a API falha', async () => {
+      const post = vi.spyOn(api, 'post').mockRejectedValue(new Error('offline'));
+      const dados = { codigo: 'CALC-T01', idDisciplina: 1, idProfessor: 2, idSala: 3, semestre: '2026.2', diaSemana: 'Segunda-feira' as const, horarioInicio: '08:00', horarioFim: '10:00', vagas: 30, status: 'aberta' as const };
+      await expect(turmaService.criar(dados)).rejects.toThrow('offline');
+      expect(post).toHaveBeenCalledWith('/turmas', dados);
+      expect(localStorage.getItem('@UNEB:turmas_db')).toBeNull();
     });
   });
 });

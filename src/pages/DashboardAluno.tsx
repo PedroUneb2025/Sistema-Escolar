@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { useAuth } from '../hooks/useAuth';
 
@@ -28,7 +28,7 @@ export function DashboardAluno() {
       <section aria-labelledby="summary-title">
         <div className="section-heading">
           <div><span className="section-label">Acesso rápido</span><h2 id="summary-title">Resumo acadêmico</h2></div>
-          <span className="status-chip">Matrícula ativa</span>
+          <Link className="secondary-button" to="/aluno/matriculas">Matrícula online</Link>
         </div>
         <div className="summary-grid">
           {services.map((service) => (
