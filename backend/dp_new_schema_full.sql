@@ -82,7 +82,7 @@ CREATE TABLE matriz_disciplina (
 CREATE TABLE disciplina_prerequisito (
     id_disciplina INT NOT NULL,
     id_prerequisito INT NOT NULL,
-    PRIMARY KEY (id_disciplina, id_prerequisito),
+    PRIMARY KEY (id_disciplina, id_prerequisito)
 );
 
 CREATE TABLE aluno (
