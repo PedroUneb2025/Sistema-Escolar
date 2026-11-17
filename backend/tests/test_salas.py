@@ -78,19 +78,3 @@ def test_excluir_sala_com_turma_retorna_409(client, db_session):
 
     assert resp.status_code == 409
     assert db_session.get(Sala, turma.id_sala) is not None
-
-
-def test_listar_professores(client, db_session):
-    _usuario(db_session, "sec@sga.edu", "SECRETARIA")
-    _professor(db_session, 2)
-    _professor(db_session, 1)
-    _aluno(db_session, 1)
-
-    resp = client.get("/professores", headers=_headers(client, "sec@sga.edu"))
-
-    assert resp.status_code == 200
-    corpo = resp.json()
-    assert [p["nome_completo"] for p in corpo] == ["Professor 1", "Professor 2"]
-    assert set(corpo[0]) == {"id_professor", "nome_completo", "matricula_funcional"}
-    assert client.get("/professores", headers=_headers(client, "aluno1@sga.edu")).status_code == 403
-    assert client.get("/professores").status_code == 401

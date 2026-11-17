@@ -8,7 +8,7 @@ from app.api.routes.matriculas import router as matriculas_router
 from app.api.routes.notas import router as notas_router
 from app.api.routes.prerequisitos import router as prerequisitos_router
 from app.api.routes.relatorios import router as relatorios_router
-from app.api.routes.salas import professores_router
+from app.api.routes.professores import router as professores_router
 from app.api.routes.salas import router as salas_router
 from app.api.routes.turmas import router as turmas_router
 from app.api.routes.usuarios import router as usuarios_router
