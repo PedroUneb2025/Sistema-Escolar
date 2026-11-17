@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-
+from app.models.usuario import StatusUsuario
 from app.models.turma import SituacaoMatricula
 
 
@@ -10,6 +10,7 @@ class AlunoResumo(BaseModel):
     matricula: str
     nome_completo: str
     email: str
+    status: StatusUsuario
 
 
 class AlunoNaTurma(BaseModel):
