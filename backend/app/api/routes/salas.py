@@ -4,15 +4,13 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, require_perfis
 from app.db.session import get_db
-from app.models.pessoas import Professor
 from app.models.sala import Sala
 from app.models.turma import Turma
-from app.schemas.sala import ProfessorResumo, SalaCreate, SalaRead, SalaUpdate
+from app.schemas.sala import SalaCreate, SalaRead, SalaUpdate
 from app.services.sala_regras import validar_exclusao_sala, validar_sala
 from app.services.turma_regras import RegraTurmaError
 
 router = APIRouter(prefix="/salas", tags=["salas"])
-professores_router = APIRouter(prefix="/professores", tags=["professores"])
 
 PERFIS_ESCRITA = ("SECRETARIA", "COORDENACAO", "ADMIN")
 leitura = Depends(get_current_user)
@@ -103,22 +101,3 @@ def excluir_sala(id_sala: int, db: Session = Depends(get_db)):
     db.delete(sala)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
-@professores_router.get("", response_model=list[ProfessorResumo], dependencies=[escrita])
-def listar_professores(
-    limite: int = Query(default=200, ge=1, le=500),
-    offset: int = Query(default=0, ge=0),
-    db: Session = Depends(get_db),
-):
-    """Somente leitura, para o select de professor do formulário de turma.
-
-    Só id, nome e matrícula funcional (CPF fica de fora, RNF02).
-    """
-    linhas = db.execute(
-        select(Professor.id_professor, Professor.nome_completo, Professor.matricula_funcional)
-        .order_by(Professor.nome_completo)
-        .limit(limite)
-        .offset(offset)
-    ).all()
-    return [ProfessorResumo(**l._mapping) for l in linhas]

@@ -10,6 +10,7 @@ from app.models.curriculo import Disciplina
 from app.models.pessoas import Professor
 from app.models.sala import Sala
 from app.models.turma import DiaSemana, MatriculaTurma, SituacaoMatricula, StatusTurma, Turma
+from app.models.usuario import StatusUsuario
 from app.schemas.turma import TurmaRead, TurmaWrite, VagasRead
 from app.services.turma_regras import (
     DIA_CODIGO_PARA_EXTENSO,
@@ -172,7 +173,9 @@ def _agendas_em_conflito(
     ]
 
 
-def _validar_corpo(db: Session, dados: TurmaWrite, id_turma: int | None) -> tuple[time, time]:
+def _validar_corpo(
+    db: Session, dados: TurmaWrite, id_turma: int | None, professor_atual: int | None = None
+) -> tuple[time, time]:
     """Valida o corpo de criação/edição. Devolve (hora_inicio, hora_fim)."""
     try:
         validar_dia_e_status(dados.diaSemana, dados.status)
@@ -185,6 +188,10 @@ def _validar_corpo(db: Session, dados: TurmaWrite, id_turma: int | None) -> tupl
     professor = db.get(Professor, dados.idProfessor)
     if professor is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Professor não encontrado")
+    # Professor inativo não é alocado a turma. Na edição, manter o professor que a
+    # turma já tem continua permitido (senão nem dava para ajustar vagas ou horário).
+    if professor.usuario.status != StatusUsuario.ativo and dados.idProfessor != professor_atual:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Professor inativo não pode ser alocado a uma turma")
     sala = db.get(Sala, dados.idSala)
     if sala is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Sala não encontrada")
@@ -274,7 +281,7 @@ def editar_turma(id_turma: int, dados: TurmaWrite, db: Session = Depends(get_db)
     turma = db.get(Turma, id_turma)
     if turma is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Turma não encontrada")
-    ini, fim = _validar_corpo(db, dados, id_turma=id_turma)
+    ini, fim = _validar_corpo(db, dados, id_turma=id_turma, professor_atual=turma.id_professor)
 
     turma.id_disciplina = dados.idDisciplina
     turma.id_professor = dados.idProfessor

@@ -23,9 +23,3 @@ class SalaRead(BaseModel):
     bloco_predio: str
     capacidade: int
     tipo: str
-
-
-class ProfessorResumo(BaseModel):
-    id_professor: int
-    nome_completo: str
-    matricula_funcional: str

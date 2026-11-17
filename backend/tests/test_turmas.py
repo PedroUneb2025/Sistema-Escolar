@@ -2,6 +2,7 @@ from datetime import time
 
 from app.models.sala import Sala
 from app.models.turma import MatriculaTurma, SituacaoMatricula
+from app.models.usuario import StatusUsuario
 from tests.helpers import _aluno, _disciplina, _headers, _professor, _usuario
 
 
@@ -307,3 +308,31 @@ def test_listagem_filtra_por_semestre_status_e_busca(client, db_session):
     assert len(client.get("/turmas?busca=Cálculo", headers=h).json()) == 2
     assert len(client.get("/turmas?limite=1", headers=h).json()) == 1
     assert client.get("/turmas?status=xyz", headers=h).status_code == 422
+
+
+# ----------------------------- professor inativo -----------------------------
+
+def test_professor_inativo_nao_entra_em_turma_nova(client, db_session):
+    _, prof2, disc, sala_a, _ = _cenario(db_session)
+    prof2.usuario.status = StatusUsuario.inativo
+    db_session.commit()
+
+    resp = _criar(client, _headers(client, "sec@sga.edu"), _corpo(prof2, disc, sala_a))
+
+    assert resp.status_code == 409
+    assert resp.json()["detail"] == "Professor inativo não pode ser alocado a uma turma"
+
+
+def test_editar_turma_de_professor_que_ficou_inativo(client, db_session):
+    prof1, prof2, disc, sala_a, _ = _cenario(db_session)
+    h = _headers(client, "sec@sga.edu")
+    turma = _criar(client, h, _corpo(prof1, disc, sala_a)).json()
+    prof1.usuario.status = StatusUsuario.inativo
+    prof2.usuario.status = StatusUsuario.inativo
+    db_session.commit()
+
+    manter = client.put(f"/turmas/{turma['id']}", json=_corpo(prof1, disc, sala_a, vagas=35), headers=h)
+    trocar = client.put(f"/turmas/{turma['id']}", json=_corpo(prof2, disc, sala_a), headers=h)
+
+    assert manter.status_code == 200  # segue com o mesmo professor: pode ajustar a turma
+    assert trocar.status_code == 409  # trocar para outro inativo: não

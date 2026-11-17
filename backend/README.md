@@ -90,6 +90,9 @@ Leitura de currículo e pré-requisitos: qualquer usuário autenticado.
 | `GET /relatorios/turmas/{id}/alunos` | SECRETARIA, ADMIN, PROFESSOR (da turma) | alunos da turma, com nota e frequência |
 | `POST /usuarios/alunos`, `POST /usuarios/professores` | SECRETARIA, ADMIN | cadastro (conta + registro, na mesma transação) |
 | `POST /usuarios/funcionarios` | ADMIN | secretaria, coordenação, financeiro ou admin |
+| `GET /professores` | SECRETARIA, COORDENACAO, ADMIN | lista com e-mail, titulação e status; `?busca=` (nome ou matrícula funcional), `?status=`, `?limite=` (máx. 500) e `?offset=`; sem CPF |
+| `GET/PUT/PATCH /professores/{id}` | SECRETARIA, ADMIN | detalhe (com CPF), edição completa e edição parcial; CPF, matrícula funcional ou e-mail repetidos → `409` |
+| `PATCH /professores/{id}/status` | SECRETARIA, ADMIN | `{"status": "ativo" \| "inativo"}`; inativo não faz login e não é alocado a turma nova |
 
 Erros: `401` sem token ou token inválido · `403` sem permissão · `404` não encontrado · `409` conflito
 (duplicado, sem vaga, pré-requisito, horário) · `422` dados inválidos. A mensagem fica em `detail`.
