@@ -128,6 +128,20 @@ CREATE TABLE matricula_turma (
     CONSTRAINT uk_aluno_turma UNIQUE (id_aluno, id_turma)
 );
 
+CREATE TABLE frequencia_aula (
+    id_frequencia INT AUTO_INCREMENT PRIMARY KEY,
+    id_matricula_turma INT NOT NULL,
+    data_aula DATE NOT NULL,
+    quantidade_faltas INT NOT NULL DEFAULT 0,
+    conteudo_ministrado VARCHAR(255) NULL,
+    justificativa VARCHAR(255) NULL,
+    CONSTRAINT uk_frequencia_matricula_data UNIQUE (id_matricula_turma, data_aula), --GARANTIR QUE NÃO HÁ REGISTRO DUPLICADO DE FREQUÊNCIA PARA A MESMA AULA
+    CONSTRAINT chk_faltas_nao_negativas CHECK (quantidade_faltas >= 0), --EVITAR FALTAS NEGATIVAS
+    CONSTRAINT fk_fa_matricula_turma FOREIGN KEY (id_matricula_turma) 
+        REFERENCES matricula_turma (id_matricula_turma) 
+        ON DELETE CASCADE --FAZER COM QUE TODA AS FREQUÊNCIAS SEJAM EXCLUÍDAS CASO A MATRÍCULA SEJA CANCELADA / EXCLUIDA
+);
+
 ALTER TABLE usuario_perfil 
     ADD CONSTRAINT fk_up_usuario FOREIGN KEY (id_usuario) REFERENCES usuario (id_usuario) ON DELETE CASCADE,
     ADD CONSTRAINT fk_up_perfil FOREIGN KEY (id_perfil) REFERENCES perfil (id_perfil) ON DELETE CASCADE;
@@ -196,3 +210,5 @@ CREATE INDEX idx_matricula_aluno_desempenho ON matricula_turma (id_aluno, situac
 CREATE INDEX idx_turma_periodo_sala ON turma (semestre_letivo, dia_semana, id_sala, hora_inicio, hora_fim);
 -- turma: portal do docente / turmas ofertadas por disciplina
 CREATE INDEX idx_turma_professor_oferta ON turma (semestre_letivo, id_professor, id_disciplina);
+
+CREATE INDEX idx_frequencia_matricula_data ON frequencia_aula (id_matricula_turma, data_aula, quantidade_faltas);
