@@ -3,7 +3,6 @@ CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 USE sga_edu;
 
-
 CREATE TABLE usuario (
     id_usuario INT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(150) NOT NULL UNIQUE,
@@ -37,7 +36,6 @@ CREATE TABLE perfil_permissao (
     id_permissao INT NOT NULL,
     PRIMARY KEY (id_perfil, id_permissao)
 );
-
 
 CREATE TABLE sala (
     id_sala INT AUTO_INCREMENT PRIMARY KEY,
@@ -133,13 +131,13 @@ CREATE TABLE frequencia_aula (
     id_matricula_turma INT NOT NULL,
     data_aula DATE NOT NULL,
     quantidade_faltas INT NOT NULL DEFAULT 0,
-    conteudo_ministrado VARCHAR(255) NULL,
+    conteudo_ministrado TEXT NULL,
     justificativa VARCHAR(255) NULL,
-    CONSTRAINT uk_frequencia_matricula_data UNIQUE (id_matricula_turma, data_aula), --GARANTIR QUE NÃO HÁ REGISTRO DUPLICADO DE FREQUÊNCIA PARA A MESMA AULA
-    CONSTRAINT chk_faltas_nao_negativas CHECK (quantidade_faltas >= 0), --EVITAR FALTAS NEGATIVAS
+    CONSTRAINT uk_frequencia_matricula_data UNIQUE (id_matricula_turma, data_aula), -- GARANTIR QUE NÃO HÁ REGISTRO DUPLICADO DE FREQUÊNCIA PARA A MESMA AULA
+    CONSTRAINT chk_faltas_nao_negativas CHECK (quantidade_faltas >= 0), -- EVITAR FALTAS NEGATIVAS
     CONSTRAINT fk_fa_matricula_turma FOREIGN KEY (id_matricula_turma) 
         REFERENCES matricula_turma (id_matricula_turma) 
-        ON DELETE CASCADE --FAZER COM QUE TODA AS FREQUÊNCIAS SEJAM EXCLUÍDAS CASO A MATRÍCULA SEJA CANCELADA / EXCLUIDA
+        ON DELETE CASCADE -- FAZER COM QUE TODAS AS FREQUÊNCIAS SEJAM EXCLUÍDAS CASO A MATRÍCULA SEJA CANCELADA / EXCLUÍDA
 );
 
 ALTER TABLE usuario_perfil 
@@ -177,38 +175,9 @@ ALTER TABLE matricula_turma
     ADD CONSTRAINT fk_mt_aluno FOREIGN KEY (id_aluno) REFERENCES aluno (id_aluno),
     ADD CONSTRAINT fk_mt_turma FOREIGN KEY (id_turma) REFERENCES turma (id_turma);
 
--- Deixe as Triggers comentadas para evitar problemas de performance em operações de inserção e atualização em massa.
---DELIMITER $$
---CREATE TRIGGER trg_matriz_curricular_unica_ativa_ai
---AFTER INSERT ON matriz_curricular
---FOR EACH ROW
---BEGIN
---   IF NEW.ativo = TRUE THEN
---       UPDATE matriz_curricular
---       SET ativo = FALSE
---       WHERE id_curso = NEW.id_curso AND id_matriz <> NEW.id_matriz;
---   END IF;
---END$$
-
---CREATE TRIGGER trg_matriz_curricular_unica_ativa_au
---AFTER UPDATE ON matriz_curricular
---FOR EACH ROW
---BEGIN
---    IF NEW.ativo = TRUE AND OLD.ativo = FALSE THEN
---        UPDATE matriz_curricular
---        SET ativo = FALSE
---       WHERE id_curso = NEW.id_curso AND id_matriz <> NEW.id_matriz;
---    END IF;
---END$$
---DELIMITER ;
-
--- matricula_turma: listagem de chamada / relatórios por turma
+-- Índices de Performance
 CREATE INDEX idx_matricula_turma_relatorio ON matricula_turma (id_turma, situacao, frequencia);
--- matricula_turma: histórico do aluno, média/frequência e validação de pré-requisitos
 CREATE INDEX idx_matricula_aluno_desempenho ON matricula_turma (id_aluno, situacao, nota_final);
--- turma: quadro de horários, alocação de salas e conflitos
 CREATE INDEX idx_turma_periodo_sala ON turma (semestre_letivo, dia_semana, id_sala, hora_inicio, hora_fim);
--- turma: portal do docente / turmas ofertadas por disciplina
 CREATE INDEX idx_turma_professor_oferta ON turma (semestre_letivo, id_professor, id_disciplina);
-
 CREATE INDEX idx_frequencia_matricula_data ON frequencia_aula (id_matricula_turma, data_aula, quantidade_faltas);
