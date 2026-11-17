@@ -9,7 +9,7 @@ from app.models.curriculo import Disciplina
 from app.models.pessoas import Aluno, Professor
 from app.models.prerequisito import DisciplinaPrerequisito
 from app.models.sala import Sala
-from app.models.turma import MatriculaTurma, SituacaoMatricula, Turma
+from app.models.turma import MatriculaTurma, SituacaoMatricula, StatusTurma, Turma
 from app.models.usuario import Usuario
 from app.schemas.matricula import MatriculaCreate, MatriculaDetalhe, MatriculaRead
 
@@ -75,10 +75,18 @@ def criar_matricula(
     # ocuparem a última vaga ao mesmo tempo. O lock dura até o commit.
     # (Seleciona só o id para travar apenas a turma, sem os joins de relacionamento.)
     travada = db.execute(
-        select(Turma.id_turma, Turma.vagas_totais).where(Turma.id_turma == dados.id_turma).with_for_update()
+        select(Turma.id_turma, Turma.vagas_totais, Turma.status)
+        .where(Turma.id_turma == dados.id_turma)
+        .with_for_update()
     ).first()
     if travada is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Turma não encontrada")
+    # Só turma aberta aceita matrícula (vale para o aluno e para a secretaria).
+    if travada.status != StatusTurma.aberta:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            f"A turma não está aberta para matrícula (situação da turma: {travada.status.value})",
+        )
     turma = db.get(Turma, dados.id_turma)
 
     # --- 3. Já matriculado? ---
