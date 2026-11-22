@@ -8,26 +8,50 @@ Com o Docker aberto, dentro de `backend/`:
 
 ```powershell
 docker compose up -d
-Get-Content db_schema_dba.sql | docker compose exec -T db mysql -u sga -psga123 sga_edu
-Get-Content drop_triggers.sql | docker compose exec -T db mysql -u sga -psga123 sga_edu
-Get-Content sprint3_dba_incremental.sql | docker compose exec -T db mysql -u sga -psga123 sga_edu
+docker compose logs db --tail 3      # espere aparecer "ready for connections"
+Get-Content dp_new_schema_full.sql | docker compose exec -T db mysql -u sga -psga123 sga_edu
 
 py -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-copy .env.example .env        # e troque a SECRET_KEY
+copy .env.example .env               # e troque a SECRET_KEY
 
 alembic stamp head
-py -m app.seed                # perfis e usuário admin
-py -m app.seed_demo           # contas de teste (NUNCA em produção)
+py -m app.seed                       # perfis e usuário admin
+py -m app.seed_demo                  # contas de teste (NUNCA em produção)
 uvicorn app.main:app --reload
 ```
 
 Documentação interativa: http://localhost:8000/docs
 
-Por que o `drop_triggers.sql`: o MySQL não permite que uma trigger altere a própria tabela que a disparou
-(erro 1442). A regra "só uma matriz curricular ativa por curso" é garantida na aplicação
-(`api/routes/curriculo.py`), e as triggers do `db_schema_dba.sql` precisam ser removidas.
+**Um único script cria o banco inteiro** (`dp_new_schema_full.sql`, do DBA). Em um banco novo, **não** aplique
+`db_schema_dba.sql`, `drop_triggers.sql` nem `sprint3_dba_incremental.sql`: são o histórico das sprints
+anteriores e não criam a coluna `status` da turma. Sem essa coluna, `GET /turmas` quebra.
+
+### Já tenho um banco criado nas sprints anteriores
+
+```powershell
+alembic current                      # se não mostrar nada, rode antes: alembic stamp e56c53147d20
+alembic upgrade head                 # cria a coluna turma.status
+```
+
+As triggers de "matriz ativa" foram removidas de propósito: o MySQL não permite que uma trigger altere a
+própria tabela que a disparou (erro 1442). A regra "só uma matriz curricular ativa por curso" é garantida
+na aplicação (`api/routes/curriculo.py`).
+
+## Publicação (produção)
+
+O `Dockerfile` roda a API na porta definida pela hospedagem (variável `PORT`). Variáveis de ambiente:
+
+| Variável | Valor |
+|---|---|
+| `DATABASE_URL` | `mysql+pymysql://usuario:senha@host:porta/sga_edu` (se o provedor exigir SSL: acrescente `?ssl_ca=certs/ca.pem`) |
+| `SECRET_KEY` | texto longo e aleatório, só no painel da hospedagem |
+| `CORS_ORIGINS` | `["https://pedrouneb2025.github.io"]` (só a origem, sem caminho) |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | `30` |
+
+No primeiro deploy: aplicar `dp_new_schema_full.sql` no banco, `alembic stamp head` e `py -m app.seed`
+(**troque a senha do admin**). Não rode `seed_demo` em produção sem trocar a senha de demonstração.
 
 ## Contas de demonstração (`app.seed_demo`)
 
@@ -82,7 +106,7 @@ Leitura de currículo e pré-requisitos: qualquer usuário autenticado.
 | `GET/POST /matrizes`, `GET/PUT/DELETE /matrizes/{id}` | idem | matrizes curriculares (ativar uma desativa as outras do curso) |
 | `GET/POST /matrizes/{id}/disciplinas`, `DELETE .../{id_disciplina}` | idem | disciplinas da matriz |
 | `GET/POST /disciplinas/{id}/prerequisitos`, `DELETE .../{id_prerequisito}` | idem | pré-requisitos (bloqueia ciclos) |
-| `POST /matriculas` | ALUNO, SECRETARIA, ADMIN | matrícula: vagas, pré-requisitos e conflito de horário |
+| `POST /matriculas` | ALUNO, SECRETARIA, ADMIN | matrícula: turma aberta, vagas, pré-requisitos e conflito de horário |
 | `GET /matriculas/minhas` | ALUNO | matrículas com turma, horário, nota e frequência |
 | `GET /academico/minhas-turmas` | ALUNO | mesmos dados, no formato do painel do front (camelCase) |
 | `GET /relatorios/alunos` | SECRETARIA, ADMIN | lista de alunos (`?busca=`), paginada |
@@ -90,6 +114,12 @@ Leitura de currículo e pré-requisitos: qualquer usuário autenticado.
 | `GET /relatorios/turmas/{id}/alunos` | SECRETARIA, ADMIN, PROFESSOR (da turma) | alunos da turma, com nota e frequência |
 | `POST /usuarios/alunos`, `POST /usuarios/professores` | SECRETARIA, ADMIN | cadastro (conta + registro, na mesma transação) |
 | `POST /usuarios/funcionarios` | ADMIN | secretaria, coordenação, financeiro ou admin |
+| `GET/POST /salas`, `GET/PUT/DELETE /salas/{id}` | leitura: logado · escrita: SECRETARIA, COORDENACAO, ADMIN | salas |
+| `GET /professores` | SECRETARIA, COORDENACAO, ADMIN | lista de professores (para os campos de seleção) |
+| `GET/POST /turmas`, `GET/PUT/DELETE /turmas/{id}` | leitura: logado · escrita: SECRETARIA, COORDENACAO, ADMIN | turmas, com validação de conflito de horário (sala e professor) |
+| `GET /turmas/{id}/vagas` | logado | vagas totais, ocupadas e disponíveis |
+| `PATCH /turmas/{id}/matriculas/{id_matricula}` | PROFESSOR (da turma), SECRETARIA, ADMIN | lança `nota_final` e `frequencia` |
+| `GET /turmas/{id}/resumo` | PROFESSOR (da turma), SECRETARIA, ADMIN | média das notas, frequência média e contagem por situação |
 
 Erros: `401` sem token ou token inválido · `403` sem permissão · `404` não encontrado · `409` conflito
 (duplicado, sem vaga, pré-requisito, horário) · `422` dados inválidos. A mensagem fica em `detail`.
@@ -100,12 +130,13 @@ Erros: `401` sem token ou token inválido · `403` sem permissão · `404` não 
 - **Só `situacao = 'matriculado'` ocupa vaga** (mesma regra da consulta do DBA).
 - **O MySQL roda em `READ COMMITTED`** (`app/db/session.py`). Sem isso, a matrícula na última vaga
   podia ser dada a duas pessoas ou gerar deadlock. Não remova sem rodar `scripts/verificar_corrida_vagas.py`.
+- **Só turma com status `aberta` aceita matrícula** (fechada ou cancelada retorna 409), para o aluno e para a secretaria.
 - **Pré-requisito cumprido** = ter sido `aprovado` em qualquer turma da disciplina.
 - O banco guarda só `nota_final` (não existe nota por avaliação).
 
 ## Pendências
 
-- CRUD de Turma e Sala no backend (Dev B). O front usa dados locais enquanto a rota não existir.
-- Coluna `status` na tabela `turma` (aberta, fechada ou cancelada), usada pelo front. Depende do DBA.
+- Consulta individual, edição e inativação de aluno e de professor (hoje só existem cadastro e listagem).
 - Lista de presença aula a aula: o banco só tem a frequência consolidada. Depende de tabelas novas.
 - Regra de aprovação (nota e frequência mínimas), ainda não definida.
+- Publicação do backend e do banco (ver "Publicação").
