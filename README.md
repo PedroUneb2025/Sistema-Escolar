@@ -103,3 +103,10 @@ O login, o JWT e o MFA são simulados no navegador para fins acadêmicos. Ainda 
   "token_type": "bearer",
   "perfis": ["ADMIN", "PROFESSOR"]
 }
+## Publicar no GitHub Pages integrado à API
+
+O workflow `.github/workflows/deploy.yml` publica o frontend e compila com a variável `VITE_API_URL`. No GitHub, abra `Settings > Secrets and variables > Actions > Variables > New repository variable` e crie `VITE_API_URL` com `https://tribune-recorded-london-sonic.trycloudflare.com` (sem `/api` e sem barra final). O workflow mantém `VITE_ENABLE_DEMO=false` na publicação.
+
+Faça commit e push para a branch `main`, ou use `Actions > Publicar no GitHub Pages > Run workflow`. Acompanhe o job até concluir. Se a variável for criada/alterada após um deploy, execute um novo deploy para que o endereço entre no bundle publicado. A API precisa permitir CORS para `https://pedrouneb2025.github.io` e `http://localhost:5173`.
+
+Para desenvolvimento local, use `npm install` e `npm run dev`. O arquivo `.env.example` mostra a configuração esperada; copie-o para `.env` na raiz do projeto para apontar ao túnel informado.

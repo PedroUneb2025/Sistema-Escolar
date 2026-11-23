@@ -34,14 +34,15 @@ jobs:
           cache: npm
 
       - name: Instalar dependências
-        run: |
-          rm -rf node_modules 
-          npm install
+        run: npm ci
 
       - name: Gerar versão de produção
         env:
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
           VITE_ENABLE_DEMO: 'false'
-        run: npm run build
+        run: |
+          test -n "$VITE_API_URL" || (echo 'Configure a variável Actions VITE_API_URL' && exit 1)
+          npm run build
 
       - name: Configurar GitHub Pages
         uses: actions/configure-pages@v6

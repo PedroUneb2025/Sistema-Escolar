@@ -7,9 +7,11 @@ const AUTH_STORAGE_KEYS = {
   user: '@UNEB:user',
 } as const;
 
+const configuredApiUrl = import.meta.env.VITE_API_URL?.trim().replace(/\/+$/, '');
+
 export const api = axios.create({
   timeout: 15000,
-  baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:8000',
+  baseURL: configuredApiUrl || 'http://localhost:8000',
 });
 
 api.interceptors.request.use((config) => {
@@ -39,10 +41,8 @@ api.interceptors.response.use(
       sessionStorage.removeItem(AUTH_STORAGE_KEYS.user);
       localStorage.removeItem(AUTH_STORAGE_KEYS.token);
       localStorage.removeItem(AUTH_STORAGE_KEYS.user);
-
       window.dispatchEvent(new Event('auth:expired'));
     }
-
     return Promise.reject(error);
   },
 );
@@ -54,22 +54,16 @@ export interface MeResponse {
   perfis: string[];
 }
 
-/**
- * POST /auth/login — exige application/x-www-form-urlencoded com `username` e `password`
- */
+/** POST /auth/login — form-urlencoded com username (e-mail) e password. */
 export async function loginRequest(email: string, password: string) {
-  const body = new URLSearchParams();
-  body.set('username', email);
-  body.set('password', password);
-
+  const body = new URLSearchParams({ username: email, password });
   const { data } = await api.post<LoginResponse>('/auth/login', body, {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
   });
-
   return data;
 }
 
-/** GET /auth/me — retorna dados do usuário e perfis */
+/** GET /auth/me — retorna dados do usuário e perfis. */
 export async function fetchCurrentUser() {
   const { data } = await api.get<MeResponse>('/auth/me');
   return data;

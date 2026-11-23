@@ -48,6 +48,10 @@ export function GestaoSecretaria() {
             </article>
           ))}
         </div>
+        <div className="page-header__actions" style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
+          <Link to="/alunos/novo" className="primary-button">Cadastrar aluno</Link>
+          <Link to="/professores/novo" className="primary-button">Cadastrar professor</Link>
+        </div>
       </section>
     </div>
   );
