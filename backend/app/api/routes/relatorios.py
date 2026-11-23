@@ -32,7 +32,7 @@ def listar_alunos(
     db: Session = Depends(get_db),
 ):
     stmt = (
-        select(Aluno.id_aluno, Aluno.matricula, Aluno.nome_completo, Usuario.email)
+        select(Aluno.id_aluno, Aluno.matricula, Aluno.nome_completo, Usuario.email, Usuario.status)
         .join(Usuario, Usuario.id_usuario == Aluno.id_usuario)
         .order_by(Aluno.nome_completo)
         .limit(limite)
