@@ -1,14 +1,24 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, Routes, Route } from "react-router";
 import { describe, expect, it } from "vitest";
-import App from "../App";
+import { LoginPage } from "./LoginPage";
+import { ProtectedRoute } from "../components/layout/ProtectedRoute";
+import { AppLayout } from "../components/layout/AppLayout";
+import { DashboardPage } from "./DashboardPage";
 import { AuthProvider } from "../contexts/AuthContext";
 
 const renderApplication = () => render(
   <MemoryRouter initialEntries={["/login"]}>
     <AuthProvider>
-      <App />
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AppLayout />}>
+            <Route index element={<DashboardPage />} />
+          </Route>
+        </Route>
+      </Routes>
     </AuthProvider>
   </MemoryRouter>,
 );

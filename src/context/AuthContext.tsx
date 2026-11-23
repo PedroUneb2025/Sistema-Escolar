@@ -1,4 +1,5 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { AuthContext } from './auth-context';
 import type { ReactNode } from 'react';
 import { fetchCurrentUser, loginRequest, type MeResponse } from '../services/api';
 import type { AuthContextValue, AuthState, LoginCredentials, User, UserRole } from '../types/auth';
@@ -40,7 +41,6 @@ const initialAuthState: AuthState = {
   isLoading: true,
 };
 
-export const AuthContext = createContext<AuthContextValue | null>(null);
 
 function clearStoredSession() {
   localStorage.removeItem(AUTH_STORAGE_KEYS.token);
@@ -66,6 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const loginDiretoAluno = useCallback(() => {
+    if (!DEMO_ENABLED) return;
     clearStoredSession();
     sessionStorage.setItem(AUTH_STORAGE_KEYS.token, 'temp-token-aluno');
     sessionStorage.setItem(AUTH_STORAGE_KEYS.user, JSON.stringify(demoAluno));
@@ -73,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const loginDiretoDirecao = useCallback(() => {
+    if (!DEMO_ENABLED) return;
     clearStoredSession();
     sessionStorage.setItem(AUTH_STORAGE_KEYS.token, 'temp-token-direcao');
     sessionStorage.setItem(AUTH_STORAGE_KEYS.user, JSON.stringify(demoDirecao));
@@ -86,11 +88,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     window.addEventListener('auth:expired', logout);
 
-    if (token?.startsWith('temp-token-') && storedUserRaw) {
+    if (DEMO_ENABLED && token?.startsWith('temp-token-') && storedUserRaw) {
       try {
         const parsed = JSON.parse(storedUserRaw) as User;
         setState({ user: parsed, token, isAuthenticated: true, isLoading: false });
-        return;
+        return () => window.removeEventListener('auth:expired', logout);
       } catch {
         // ignora e continua
       }
@@ -98,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (isDemoSession()) {
       setState({ user: demoUser, token: null, isAuthenticated: true, isLoading: false });
-    } else if (token && !token.startsWith('mock-')) {
+    } else if (token && !/^(mock-|temp-token-)/.test(token)) {
       fetchCurrentUser()
         .then((me) => {
           if (active) setState({ user: toUser(me), token, isAuthenticated: true, isLoading: false });
@@ -170,11 +172,3 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
-  }
-  return context;
-};  

@@ -9,6 +9,9 @@ import { ConsultaAcademica } from '../pages/ConsultaAcademica';
 import { ProtectedRoute } from './ProtectedRoute';
 import { CurriculoPage } from '../pages/curriculo/CurriculoPage';
 import { getTurmaRoutes } from './turmaRoutes';
+import { ProfessoresList } from '../pages/professores/ProfessoresList';
+import { AlunosList } from '../pages/alunos/AlunosList';
+import { CadastroUsuario } from '../pages/usuarios/CadastroUsuario';
 
 export function AppRoutes() {
   return (
@@ -39,6 +42,15 @@ export function AppRoutes() {
         <Route element={<CoreLayout />}>
           <Route path="/secretaria/gestao" element={<GestaoSecretaria />} />
           {getTurmaRoutes()}
+        </Route>
+      </Route>
+
+      <Route element={<ProtectedRoute allowedRoles={['secretaria', 'admin']} />}>
+        <Route element={<CoreLayout />}>
+          <Route path="/professores" element={<ProfessoresList />} />
+          <Route path="/professores/novo" element={<CadastroUsuario tipo="professor" />} />
+          <Route path="/alunos" element={<AlunosList />} />
+          <Route path="/alunos/novo" element={<CadastroUsuario tipo="aluno" />} />
         </Route>
       </Route>
 

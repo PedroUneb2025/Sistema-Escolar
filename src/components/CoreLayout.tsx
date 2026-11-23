@@ -23,6 +23,9 @@ const staffNavigation: NavigationItem[] = [
   { to: '/secretaria/gestao', label: 'Visão geral', icon: 'home', end: true },
   { to: '/secretaria/gestao', label: 'Alunos', icon: 'users' },
   { to: '/turmas', label: 'Turmas e disciplinas', icon: 'book' },
+  { to: '/alunos', label: 'Alunos', icon: 'users' },
+  { to: '/professores', label: 'Professores', icon: 'users' },
+  { to: '/professores', label: 'Professores', icon: 'users' },
   { to: '/secretaria/gestao', label: 'Configurações', icon: 'settings' },
 ];
 
@@ -104,7 +107,7 @@ export function CoreLayout() {
               to={item.to}
               end={item.end}
               onClick={() => setIsSidebarOpen(false)}
-              className={({ isActive }) => `sidebar-link ${isActive && (index === 0 || item.to === '/aluno/consulta' || item.to === '/turmas' || item.to.startsWith('/curriculo/') || item.to === '/aluno/matriculas') ? 'sidebar-link--active' : ''}`}
+              className={({ isActive }) => `sidebar-link ${isActive && (index === 0 || item.to === '/aluno/consulta' || item.to === '/turmas' || item.to === '/professores' || item.to.startsWith('/curriculo/') || item.to === '/aluno/matriculas') ? 'sidebar-link--active' : ''}`}
             >
               <Icon name={item.icon} />
               <span>{item.label}</span>

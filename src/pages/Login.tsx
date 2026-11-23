@@ -161,7 +161,7 @@ export function Login() {
               {isLoading ? <><LoadingSpinner label="Validando credenciais" /> Validando...</> : 'Continuar'}
             </button>
           </form>
-          <div className="demo-credentials" style={{ marginTop: '1.5rem', background: '#e0f2fe', border: '1px solid #bae6fd' }}>
+          {DEMO_ENABLED && <div className="demo-credentials" style={{ marginTop: '1.5rem', background: '#e0f2fe', border: '1px solid #bae6fd' }}>
             <div style={{ width: '100%' }}>
               <strong style={{ color: '#0369a1', fontSize: '0.85rem' }}>Acesso Rápido para Demonstração (Sem Login)</strong>
               <p style={{ margin: '0.35rem 0 0.75rem', fontSize: '0.76rem', color: '#075985' }}>
@@ -192,7 +192,7 @@ export function Login() {
                 </button>
               </div>
             </div>
-          </div>
+          </div>}
 
           {DEMO_ENABLED && <div className="demo-credentials">
             <div>

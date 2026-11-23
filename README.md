@@ -30,7 +30,7 @@ Projeto React e TypeScript que reúne a interface do sistema acadêmico com a ar
 ### Roteamento e autorização
 
 - rotas centralizadas em `src/routes/AppRoutes.tsx`;
-- `ProtectedRoute` verifica login, MFA e papéis permitidos;
+- `ProtectedRoute` verifica login e papéis permitidos;
 - perfis disponíveis (seed do backend): `admin`, `secretaria`, `coordenacao`,
   `professor`, `aluno` e `financeiro` — um usuário pode ter mais de um perfil
   (`user.perfis: string[]`);
@@ -42,7 +42,6 @@ Projeto React e TypeScript que reúne a interface do sistema acadêmico com a ar
 
 - tela de login responsiva;
 - validação com React Hook Form, Zod e `zodResolver`;
-- campo para código MFA;
 - estados de carregamento;
 - layout principal com cabeçalho, menu lateral e rodapé;
 - menu móvel e recursos básicos de acessibilidade.
@@ -72,7 +71,7 @@ npm run build
 Copie `.env.example` para `.env` e altere o endereço quando existir uma API real:
 
 ```env
-VITE_API_URL=http://localhost:3000/api
+VITE_API_URL=http://localhost:8000
 ```
 
 ## Estrutura principal
@@ -92,14 +91,12 @@ src/
 └── main.tsx
 ```
 
-## Importante
+## Publicar no GitHub Pages
 
-O login, o JWT e o MFA são simulados no navegador para fins acadêmicos. Ainda não existe banco de dados ou servidor. Em produção, senha e código MFA devem ser validados por uma API segura.
+O frontend usa a API FastAPI para autenticar usuários. A publicação pode ser preparada antes de o servidor ficar disponível.
 
-> Projeto educacional sem vínculo com o portal oficial da UNEB.
+1. Em **Settings → Pages**, selecione **GitHub Actions**.
+2. Quando a API estiver disponível, em **Settings → Secrets and variables → Actions → Variables**, configure `VITE_API_URL` com o endereço HTTPS público da API, sem `/api`. Configure a API para permitir a origem `https://pedrouneb2025.github.io` no CORS.
+3. Após integrar as alterações à `main`, abra **Actions → Publicar no GitHub Pages → Run workflow**. Execute novamente sempre que mudar a URL.
 
-{
-  "access_token": "TOKEN_JWT",
-  "token_type": "bearer",
-  "perfis": ["ADMIN", "PROFESSOR"]
-}
+O workflow verifica o frontend em cada envio à `main`. A publicação falha se a variável estiver vazia. A publicação usa autenticação real e mantém o modo de demonstração desativado.
