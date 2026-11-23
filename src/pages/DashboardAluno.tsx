@@ -3,9 +3,9 @@ import { Icon } from '../components/Icon';
 import { useAuth } from '../hooks/useAuth';
 
 const services = [
-  { title: 'Notas e frequência', description: 'Consulte avaliações, médias e presença.', icon: 'chart' as const },
-  { title: 'Próxima aula', description: 'Engenharia de Software · Sala 12', icon: 'clock' as const },
-  { title: 'Documentos', description: 'Solicite atestados e comprovantes.', icon: 'file' as const },
+  { title: 'Notas e frequência', description: 'Consulte avaliações, médias e presença.', to: '/aluno/consulta', icon: 'chart' as const },
+  { title: 'Próxima aula', description: 'Engenharia de Software · Sala 12', to: '/aluno/consulta', icon: 'clock' as const },
+  { title: 'Documentos', description: 'Veja como obter atestados e comprovantes.', to: '/aluno/documentos', icon: 'file' as const },
 ];
 
 export function DashboardAluno() {
@@ -37,7 +37,7 @@ export function DashboardAluno() {
               <h3>{service.title}</h3><p>{service.description}</p>
               <button
                 type="button"
-                onClick={() => navigate('/aluno/consulta')}
+                onClick={() => navigate(service.to)}
               >
                 Ver detalhes <span aria-hidden="true">→</span>
               </button>

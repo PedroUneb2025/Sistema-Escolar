@@ -139,3 +139,34 @@ describe('fluxo de autenticação', () => {
   });
 
 });
+
+describe('menu por perfil', () => {
+  it.each(['ADMIN', 'SECRETARIA'])('abre os cadastros, as configurações e sai como %s', async (perfil) => {
+    const user = userEvent.setup();
+    sessionStorage.setItem('@UNEB:token', 'sessao-teste');
+    mockedApi.get.mockResolvedValue({ data: [] });
+    mockedApi.get.mockResolvedValueOnce({ data: {
+      id_usuario: 1, email: 'gestao@exemplo.com', status: 'ativo', perfis: [perfil],
+    } });
+    renderApplication('/secretaria/gestao');
+    for (const nome of ['Alunos', 'Professores', 'Configurações']) {
+      const link = await screen.findByRole('link', { name: nome });
+      await user.click(link);
+      expect(await screen.findByRole('heading', { name: nome, level: 1 })).toBeVisible();
+      expect(screen.getByRole('link', { name: nome })).toHaveAttribute('aria-current', 'page');
+    }
+    await user.click(screen.getByRole('button', { name: 'Sair da conta' }));
+    expect(await screen.findByRole('button', { name: 'Continuar' })).toBeVisible();
+    expect(sessionStorage.getItem('@UNEB:token')).toBeNull();
+  });
+
+  it('abre Documentos pelo menu do aluno', async () => {
+    sessionStorage.setItem('@UNEB:token', 'sessao-teste');
+    mockedApi.get.mockResolvedValueOnce({ data: {
+      id_usuario: 2, email: 'aluno@exemplo.com', status: 'ativo', perfis: ['ALUNO'],
+    } });
+    renderApplication('/aluno/dashboard');
+    await userEvent.setup().click(await screen.findByRole('link', { name: 'Documentos' }));
+    expect(await screen.findByRole('heading', { name: 'Documentos', level: 1 })).toBeVisible();
+  });
+});

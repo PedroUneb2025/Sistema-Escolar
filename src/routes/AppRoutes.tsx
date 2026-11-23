@@ -1,4 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
+import { Configuracoes } from '../pages/Configuracoes';
+import { DocumentosAluno } from '../pages/DocumentosAluno';
 import { CoreLayout } from '../components/CoreLayout';
 import { MatriculaOnline } from '../pages/matriculas/MatriculaOnline';
 import { DashboardAluno } from '../pages/DashboardAluno';
@@ -27,6 +29,7 @@ export function AppRoutes() {
 
       <Route element={<ProtectedRoute allowedRoles={['aluno']} />}>
         <Route element={<CoreLayout />}>
+          <Route path="/aluno/documentos" element={<DocumentosAluno />} />
           <Route path="/aluno/dashboard" element={<DashboardAluno />} />
           <Route path="/aluno/matriculas" element={<MatriculaOnline />} />
         </Route>
@@ -47,6 +50,7 @@ export function AppRoutes() {
 
       <Route element={<ProtectedRoute allowedRoles={['secretaria', 'admin']} />}>
         <Route element={<CoreLayout />}>
+          <Route path="/configuracoes" element={<Configuracoes />} />
           <Route path="/professores" element={<ProfessoresList />} />
           <Route path="/professores/novo" element={<CadastroUsuario tipo="professor" />} />
           <Route path="/alunos" element={<AlunosList />} />

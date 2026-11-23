@@ -120,13 +120,13 @@ h1, h2, h3, p { margin-top: 0; }
 .sidebar { position: fixed; inset: 0 auto 0 0; z-index: 1000; width: var(--sidebar-width); display: flex; flex-direction: column; padding: 1.4rem; color: var(--white); background: linear-gradient(180deg, var(--blue-950), var(--blue-900)); box-shadow: 8px 0 28px rgba(3, 36, 71, .09); }
 .sidebar__top { display: flex; align-items: center; justify-content: space-between; min-height: 52px; }
 .sidebar__close { display: none; place-items: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 9px; color: var(--white); background: rgba(255, 255, 255, .08); }
-.sidebar__nav { display: grid; gap: .35rem; margin-top: 3.2rem; }
+.sidebar__nav { min-height: 0; overflow-y: auto; align-content: start; display: grid; gap: .35rem; margin-top: 3.2rem; }
 .sidebar__label { margin: 0 .8rem .55rem; color: rgba(255, 255, 255, .45); font-size: .65rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 .sidebar-link { display: flex; align-items: center; gap: .8rem; min-height: 47px; padding: .7rem .8rem; border-radius: 10px; color: rgba(255, 255, 255, .7); font-size: .86rem; font-weight: 650; text-decoration: none; transition: color .16s ease, background .16s ease; }
 .sidebar-link:hover { color: var(--white); background: rgba(255, 255, 255, .07); }
 .sidebar-link--active { color: var(--blue-950); background: var(--yellow-500); }
 .sidebar-link--active:hover { color: var(--blue-950); background: var(--yellow-300); }
-.sidebar__footer { margin-top: auto; padding-top: 1.2rem; border-top: 1px solid rgba(255, 255, 255, .11); }
+.sidebar__footer { flex-shrink: 0; margin-top: auto; padding-top: 1.2rem; border-top: 1px solid rgba(255, 255, 255, .11); }
 .sidebar-profile { display: flex; align-items: center; gap: .7rem; padding: .2rem .45rem 1rem; }
 .sidebar-profile__avatar, .user-summary__avatar { display: grid; place-items: center; border-radius: 50%; color: var(--blue-950); background: var(--yellow-500); font-weight: 850; }
 .sidebar-profile__avatar { width: 38px; height: 38px; flex: 0 0 38px; }

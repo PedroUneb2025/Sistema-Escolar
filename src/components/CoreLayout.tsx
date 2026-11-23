@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { isDemoSession } from '../services/demoMode';
 import { Icon } from './Icon';
@@ -16,17 +16,15 @@ const studentNavigation: NavigationItem[] = [
   { to: '/aluno/dashboard', label: 'Início', icon: 'home', end: true },
   { to: '/aluno/matriculas', label: 'Matrícula online', icon: 'book' },
   { to: '/aluno/consulta', label: 'Consulta acadêmica (Notas & Horários)', icon: 'chart' },
-  { to: '/aluno/dashboard', label: 'Documentos', icon: 'file' },
+  { to: '/aluno/documentos', label: 'Documentos', icon: 'file' },
 ];
 
 const staffNavigation: NavigationItem[] = [
   { to: '/secretaria/gestao', label: 'Visão geral', icon: 'home', end: true },
-  { to: '/secretaria/gestao', label: 'Alunos', icon: 'users' },
   { to: '/turmas', label: 'Turmas e disciplinas', icon: 'book' },
   { to: '/alunos', label: 'Alunos', icon: 'users' },
   { to: '/professores', label: 'Professores', icon: 'users' },
-  { to: '/professores', label: 'Professores', icon: 'users' },
-  { to: '/secretaria/gestao', label: 'Configurações', icon: 'settings' },
+  { to: '/configuracoes', label: 'Configurações', icon: 'settings' },
 ];
 
 const roleLabels: Record<string, string> = {
@@ -54,11 +52,15 @@ export function CoreLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { logout, user } = useAuth();
   const canManageCurriculum = user?.perfis.some((role) => ['admin', 'secretaria', 'coordenacao'].includes(role));
-  const navigation = canManageCurriculum ? [...staffNavigation,
+  const { pathname } = useLocation();
+  const canManageUsers = user?.perfis.some(role => role === 'admin' || role === 'secretaria');
+  const staffItems = staffNavigation.filter(item =>
+    canManageUsers || !['/alunos', '/professores', '/configuracoes'].includes(item.to));
+  const navigation = canManageCurriculum ? [...staffItems,
     { to: '/curriculo/cursos', label: 'Cursos', icon: 'book' as const },
     { to: '/curriculo/disciplinas', label: 'Disciplinas', icon: 'book' as const },
     { to: '/curriculo/matrizes', label: 'Matrizes curriculares', icon: 'book' as const },
-  ] : user?.perfis.includes('aluno') ? studentNavigation : staffNavigation;
+  ] : user?.perfis.includes('aluno') ? studentNavigation : staffItems;
   const displayName = getDisplayName(user?.email);
 
   useEffect(() => {
@@ -101,13 +103,13 @@ export function CoreLayout() {
 
         <nav className="sidebar__nav" aria-label="Navegação acadêmica">
           <span className="sidebar__label">Menu acadêmico</span>
-          {navigation.map((item, index) => (
+          {navigation.map((item) => (
             <NavLink
-              key={`${item.label}-${index}`}
+              key={item.to}
               to={item.to}
               end={item.end}
               onClick={() => setIsSidebarOpen(false)}
-              className={({ isActive }) => `sidebar-link ${isActive && (index === 0 || item.to === '/aluno/consulta' || item.to === '/turmas' || item.to === '/professores' || item.to.startsWith('/curriculo/') || item.to === '/aluno/matriculas') ? 'sidebar-link--active' : ''}`}
+              className={({ isActive }) => `sidebar-link ${isActive ? 'sidebar-link--active' : ''}`}
             >
               <Icon name={item.icon} />
               <span>{item.label}</span>
@@ -147,7 +149,7 @@ export function CoreLayout() {
             >
               <Icon name="menu" />
             </button>
-            <div><span className="app-header__eyebrow">Sistema acadêmico</span><strong>Visão geral</strong></div>
+            <div><span className="app-header__eyebrow">Sistema acadêmico</span><strong>{navigation.find(item => pathname === item.to || pathname.startsWith(item.to + '/'))?.label ?? 'Sistema acadêmico'}</strong></div>
           </div>
 
           <div className="app-header__actions">
