@@ -1,3 +1,4 @@
+import { useAcoesCadastro } from '../../hooks/useAcoesCadastro';
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { Icon } from '../../components/Icon';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
@@ -6,6 +7,7 @@ import { professorService, Professor } from '../../services/professorService';
 const ITEMS_PER_PAGE = 10;
 
 export function ProfessoresList() {
+  const acoes = useAcoesCadastro('professores');
   const [professores, setProfessores] = useState<Professor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
@@ -45,7 +47,7 @@ export function ProfessoresList() {
         p.matricula_funcional.toLowerCase().includes(busca.toLowerCase()) ||
         (p.email ?? '').toLowerCase().includes(busca.toLowerCase());
       const matchStatus =
-        filtroStatus === 'todos' || (p.status ?? 'ativo') === filtroStatus;
+        filtroStatus === 'todos' || p.status === filtroStatus;
       return matchBusca && matchStatus;
     });
   }, [professores, busca, filtroStatus]);
@@ -102,6 +104,7 @@ export function ProfessoresList() {
   };
 
   const getStatusBadge = (status: string | undefined) => {
+    if (!status) return 'Não informado';
     if (status === 'ativo') {
       return <span className="status-badge status-badge--success">Ativo</span>;
     }
@@ -115,7 +118,7 @@ export function ProfessoresList() {
           <span className="section-label">Campus II · Gestão Acadêmica</span>
           <h1>Professores</h1>
           <p className="text-muted">
-            Consulte, edite e gerencie o acesso dos professores cadastrados.
+            Consulte os professores cadastrados.
           </p>
         </div>
       </header>
@@ -139,7 +142,7 @@ export function ProfessoresList() {
           <span className="summary-card__icon"><Icon name="close" /></span>
           <h3>Professores Inativos</h3>
           <strong className="summary-card__value">
-            {professores.filter((p) => p.status !== 'ativo').length}
+            {professores.filter((p) => p.status === 'inativo').length}
           </strong>
           <p>Com acesso bloqueado</p>
         </article>
@@ -211,7 +214,7 @@ export function ProfessoresList() {
                 <th scope="col">E-mail</th>
                 <th scope="col">Titulação</th>
                 <th scope="col">Status</th>
-                <th scope="col" className="text-right">Ações</th>
+                {(acoes.editar || acoes.alterarStatus) && <th scope="col" className="text-right">Ações</th>}
               </tr>
             </thead>
             <tbody>
@@ -222,18 +225,18 @@ export function ProfessoresList() {
                   <td>{prof.email ?? '—'}</td>
                   <td>{prof.titulacao ?? '—'}</td>
                   <td>{getStatusBadge(prof.status)}</td>
-                  <td className="text-right">
+                  {(acoes.editar || acoes.alterarStatus) && <td className="text-right">
                     <div className="table-actions">
-                      <button type="button" className="action-button action-button--edit" onClick={() => abrirEdicao(prof)} title="Editar professor">
+                      {acoes.editar && <button type="button" className="action-button action-button--edit" onClick={() => abrirEdicao(prof)} title="Editar professor">
                         <Icon name="edit" size={16} />
                         <span>Editar</span>
-                      </button>
-                      <button type="button" className={`action-button ${prof.status === 'ativo' ? 'action-button--delete' : 'action-button--success'}`} onClick={() => alternarStatus(prof)} title={prof.status === 'ativo' ? 'Inativar professor' : 'Reativar professor'}>
+                      </button>}
+                      {acoes.alterarStatus && prof.status && <button type="button" className={`action-button ${prof.status === 'ativo' ? 'action-button--delete' : 'action-button--success'}`} onClick={() => alternarStatus(prof)} title={prof.status === 'ativo' ? 'Inativar professor' : 'Reativar professor'}>
                         <Icon name={prof.status === 'ativo' ? 'close' : 'check'} size={16} />
                         <span>{prof.status === 'ativo' ? 'Inativar' : 'Reativar'}</span>
-                      </button>
+                      </button>}
                     </div>
-                  </td>
+                  </td>}
                 </tr>
               ))}
             </tbody>

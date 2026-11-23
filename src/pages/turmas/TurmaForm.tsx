@@ -61,7 +61,7 @@ export function TurmaForm({
 
   const {
     register,
-    reset,
+    watch,
     handleSubmit,
     formState: { errors },
   } = useForm<TurmaSchemaInput>({
@@ -79,10 +79,6 @@ export function TurmaForm({
       status: 'aberta',
     },
   });
-
-  useEffect(() => {
-    if (opcoes && initialData) reset(initialData);
-  }, [opcoes, initialData, reset]);
 
   const handleFormSubmit = async (data: TurmaSchemaInput) => {
     setConflitoHorarioErro(null);
@@ -209,7 +205,7 @@ export function TurmaForm({
                 Nome da Disciplina <span className="required-mark">*</span>
               </label>
               <div className={`select-shell ${errors.idDisciplina ? 'input-shell--error' : ''}`}>
-                <select id="disciplina" {...register('idDisciplina', { valueAsNumber: true })} disabled={!opcoes}>
+                <select id="disciplina" value={watch('idDisciplina')} {...register('idDisciplina', { valueAsNumber: true })} disabled={!opcoes}>
                   <option value="0">Selecione...</option>
                   {opcoes?.disciplinas.map(item => <option key={item.id_disciplina} value={item.id_disciplina}>{item.nome}</option>)}
                 </select>
@@ -222,7 +218,7 @@ export function TurmaForm({
                 Professor(a) / Docente <span className="required-mark">*</span>
               </label>
               <div className={`select-shell ${errors.idProfessor ? 'input-shell--error' : ''}`}>
-                <select id="professor" {...register('idProfessor', { valueAsNumber: true })} disabled={!opcoes}>
+                <select id="professor" value={watch('idProfessor')} {...register('idProfessor', { valueAsNumber: true })} disabled={!opcoes}>
                   <option value="0">Selecione...</option>
                   {opcoes?.professores.map(item => <option key={item.id_professor} value={item.id_professor}>{item.nome_completo}</option>)}
                 </select>
@@ -281,7 +277,7 @@ export function TurmaForm({
               Sala / Laboratório <span className="required-mark">*</span>
             </label>
             <div className={`select-shell ${errors.idSala ? 'input-shell--error' : ''}`}>
-              <select id="sala" {...register('idSala', { valueAsNumber: true })} disabled={!opcoes}>
+              <select id="sala" value={watch('idSala')} {...register('idSala', { valueAsNumber: true })} disabled={!opcoes}>
                   <option value="0">Selecione...</option>
                   {opcoes?.salas.map(item => <option key={item.id_sala} value={item.id_sala}>{item.codigo}</option>)}
                 </select>
