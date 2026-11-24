@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes.academico import router as academico_router
 from app.api.routes import alunos
+from app.api.routes.alunos_me import router as alunos_me_router
 from app.api.routes.auth import router as auth_router
 from app.api.routes.curriculo import router as curriculo_router
 from app.api.routes.matriculas import router as matriculas_router
@@ -36,6 +37,7 @@ app.include_router(salas_router)
 app.include_router(professores_router)
 app.include_router(turmas_router)
 app.include_router(notas_router)
+app.include_router(alunos_me_router)
 app.include_router(alunos.router)
 
 
