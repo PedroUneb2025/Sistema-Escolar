@@ -86,6 +86,74 @@ describe('fluxo de autenticação', () => {
     ).toBeVisible();
   });
 
+  it('mostra o aviso e desabilita o botão quando há muitas tentativas (429)', async () => {
+    mockedApi.post.mockRejectedValueOnce({
+      isAxiosError: true,
+      response: {
+        status: 429,
+        headers: { 'retry-after': '120' },
+        data: { detail: 'Muitas tentativas. Tente de novo em 2 minutos' },
+      },
+    });
+
+    const user = userEvent.setup();
+    renderApplication();
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Continuar' })).toBeEnabled());
+    await user.type(screen.getByLabelText('E-mail institucional'), 'aluno@uneb.br');
+    await user.type(screen.getByLabelText('Senha'), 'senha-errada');
+    await user.click(screen.getByRole('button', { name: 'Continuar' }));
+
+    expect(await screen.findByText('Muitas tentativas. Tente de novo em 2 minutos')).toBeVisible();
+    const botao = screen.getByRole('button', { name: /Aguarde/ });
+    expect(botao).toBeDisabled();
+    expect(botao).toHaveTextContent(/Aguarde [12]:\d{2}/);
+    expect(mockedApi.get).not.toHaveBeenCalled();
+  });
+
+  it('libera o botão e some com o aviso quando a espera acaba', async () => {
+    mockedApi.post.mockRejectedValueOnce({
+      isAxiosError: true,
+      response: {
+        status: 429,
+        headers: { 'retry-after': '1' },
+        data: { detail: 'Muitas tentativas. Tente de novo em 1 minuto' },
+      },
+    });
+
+    const user = userEvent.setup();
+    renderApplication();
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Continuar' })).toBeEnabled());
+    await user.type(screen.getByLabelText('E-mail institucional'), 'aluno@uneb.br');
+    await user.type(screen.getByLabelText('Senha'), 'senha-errada');
+    await user.click(screen.getByRole('button', { name: 'Continuar' }));
+    expect(await screen.findByRole('button', { name: /Aguarde/ })).toBeDisabled();
+
+    await waitFor(
+      () => expect(screen.getByRole('button', { name: 'Continuar' })).toBeEnabled(),
+      { timeout: 4000 },
+    );
+    expect(screen.queryByText('Muitas tentativas. Tente de novo em 1 minuto')).not.toBeInTheDocument();
+  });
+
+  it('usa os minutos da mensagem quando o navegador não expõe o Retry-After', async () => {
+    mockedApi.post.mockRejectedValueOnce({
+      isAxiosError: true,
+      response: { status: 429, headers: {}, data: { detail: 'Muitas tentativas. Tente de novo em 4 minutos' } },
+    });
+
+    const user = userEvent.setup();
+    renderApplication();
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Continuar' })).toBeEnabled());
+    await user.type(screen.getByLabelText('E-mail institucional'), 'aluno@uneb.br');
+    await user.type(screen.getByLabelText('Senha'), 'senha-errada');
+    await user.click(screen.getByRole('button', { name: 'Continuar' }));
+
+    expect(await screen.findByRole('button', { name: /Aguarde [34]:\d{2}/ })).toBeDisabled();
+  });
+
   it('bloqueia uma rota quando o perfil não possui permissão', async () => {
     sessionStorage.setItem('@UNEB:token', 'token-secretaria');
     sessionStorage.setItem(

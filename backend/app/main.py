@@ -23,6 +23,8 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    # Sem isto o navegador esconde o Retry-After do front (origem diferente da API).
+    expose_headers=["Retry-After"],
 )
 
 app.include_router(auth_router)

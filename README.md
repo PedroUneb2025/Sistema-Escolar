@@ -20,6 +20,7 @@ Projeto React e TypeScript que reúne a interface do sistema acadêmico com a ar
 - cliente Axios em `src/services/api.ts`;
 - interceptor que envia `Authorization: Bearer <token>`;
 - tratamento de respostas `401` e `403`, limpando a sessão e retornando ao login.
+- tela de login com aviso de espera quando a API responde `429` (muitas tentativas): lê o `Retry-After`, mostra o tempo restante e desabilita o botão até acabar.
 
 > A etapa de MFA (`/mfa-verification`) foi removida por enquanto: o backend
 > atual (PR `feature/backend-setup`) não implementa verificação em duas
