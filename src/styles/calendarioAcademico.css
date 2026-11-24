@@ -1,0 +1,193 @@
+/* Estilos do Calendário Acadêmico (Padrão UNEB SAGRES) */
+
+.sagres-calendario-card {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 4px 16px rgba(3, 36, 71, 0.04);
+  margin-bottom: 1.5rem;
+}
+
+.sagres-calendario-header {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.sagres-calendario-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--blue-900);
+  font-weight: 700;
+}
+
+.sagres-calendario-conteudo {
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) 1fr;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+/* Lado Esquerdo: Mini Calendário */
+.sagres-mini-calendario-bloco {
+  display: flex;
+  flex-direction: column;
+}
+
+.sagres-mes-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+  padding: 0 0.25rem;
+}
+
+.nav-mes-btn {
+  background: transparent;
+  border: 0;
+  color: #ea580c;
+  font-size: 1.5rem;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.1rem 0.5rem;
+  border-radius: 4px;
+  transition: background 0.15s ease;
+}
+
+.nav-mes-btn:hover {
+  background: #ffedd5;
+}
+
+.mes-ano-label {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #1e293b;
+  text-transform: capitalize;
+}
+
+/* Grid de Dias */
+.sagres-dias-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.sagres-grid-linha-cabecalho {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 0.4rem;
+  margin-bottom: 0.2rem;
+}
+
+.dia-sigla-col {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.sagres-grid-dias-corpo {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  row-gap: 0.35rem;
+  column-gap: 0.25rem;
+  text-align: center;
+}
+
+.celula-dia {
+  display: grid;
+  place-items: center;
+  height: 32px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1e293b;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+/* Dias de outros meses (cinza) */
+.celula-dia--outro-mes {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+/* Dia de hoje (quadro cinza com número vermelho) */
+.celula-dia--hoje {
+  background: #f1f5f9;
+  color: #dc2626 !important;
+  font-weight: 800 !important;
+  border: 1px solid #cbd5e1;
+}
+
+/* Dias com evento / feriado (laranja sólido estilo SAGRES) */
+.celula-dia--evento {
+  background: #f59e0b;
+  color: #ffffff !important;
+  font-weight: 800;
+  box-shadow: 0 1px 3px rgba(245, 158, 11, 0.3);
+}
+
+/* Lado Direito: Lista de Eventos */
+.sagres-eventos-lista-bloco {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.eventos-cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.evento-item-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #ffffff 0%, #fffbeb 100%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.evento-marcador-seta {
+  color: #1e293b;
+  font-size: 0.65rem;
+  margin-top: 0.2rem;
+  flex: 0 0 auto;
+}
+
+.evento-titulo-texto {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.35;
+}
+
+.sem-eventos-mes {
+  padding: 1.5rem;
+  text-align: center;
+  color: #64748b;
+  background: var(--soft);
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+/* Responsividade Mobile */
+@media (max-width: 768px) {
+  .sagres-calendario-conteudo {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .sagres-mini-calendario-bloco {
+    max-width: 320px;
+    margin: 0 auto;
+    width: 100%;
+  }
+}

@@ -306,7 +306,8 @@ export function ComprovanteMatricula() {
       )}
 
       {/* DOCUMENTO OFICIAL A4 (Fiel ao modelo SAGRES da UNEB) */}
-      <article className="sagres-folha-a4" aria-label="Comprovante de Matrícula Oficial UNEB">
+      <div className="sagres-documento-scroll-wrapper">
+        <article className="sagres-folha-a4" aria-label="Comprovante de Matrícula Oficial UNEB">
         {/* Topo Institucional */}
         <header className="sagres-cabecalho">
           <div className="sagres-cabecalho-logo">
@@ -490,6 +491,7 @@ export function ComprovanteMatricula() {
           </div>
         </footer>
       </article>
+      </div>
     </div>
   );
 }

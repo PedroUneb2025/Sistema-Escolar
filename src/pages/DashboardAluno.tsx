@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { useAuth } from '../hooks/useAuth';
+import { CalendarioAcademico } from '../components/CalendarioAcademico';
 import { MiniCalendarioAulas } from '../components/MiniCalendarioAulas';
 
 const services = [
@@ -46,6 +47,8 @@ export function DashboardAluno() {
           ))}
         </div>
       </section>
+
+      <CalendarioAcademico />
 
       <MiniCalendarioAulas />
 
