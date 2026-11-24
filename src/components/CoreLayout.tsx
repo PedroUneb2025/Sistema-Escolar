@@ -16,6 +16,7 @@ const studentNavigation: NavigationItem[] = [
   { to: '/aluno/dashboard', label: 'Início', icon: 'home', end: true },
   { to: '/aluno/matriculas', label: 'Matrícula online', icon: 'book' },
   { to: '/aluno/consulta', label: 'Consulta acadêmica (Notas & Horários)', icon: 'chart' },
+  { to: '/aluno/comprovante', label: 'Comprovante de matrícula', icon: 'file' },
   { to: '/aluno/documentos', label: 'Documentos', icon: 'file' },
 ];
 

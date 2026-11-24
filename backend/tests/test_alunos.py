@@ -1,4 +1,4 @@
-﻿# Destino: backend/tests/test_alunos.py
+# Destino: backend/tests/test_alunos.py
 import pytest
 
 from tests.helpers import _aluno, _headers, _professor, _usuario
@@ -34,6 +34,16 @@ def test_gestor_consulta_aluno_com_cpf(client, db_session):
     assert corpo["email"] == "aluno1@sga.edu"
     assert corpo["status"] == "ativo"
     assert corpo["cpf"] == aluno.cpf
+
+
+def test_aluno_consulta_proprio_perfil(client, db_session):
+    aluno = _aluno(db_session, 1)
+    resp = client.get("/alunos/me", headers=_headers(client, "aluno1@sga.edu"))
+    assert resp.status_code == 200
+    corpo = resp.json()
+    assert corpo["email"] == "aluno1@sga.edu"
+    assert corpo["matricula"] == aluno.matricula
+    assert corpo["nome_completo"] == aluno.nome_completo
 
 
 def test_aluno_e_professor_recebem_403(client, db_session):

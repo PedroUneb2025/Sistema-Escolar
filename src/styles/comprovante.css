@@ -1,0 +1,411 @@
+/* Estilos do Comprovante de Matrícula (Padrão Oficial UNEB SAGRES) */
+
+.comprovante-wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Barra de Ações (Filtro e Botão de Imprimir na Tela) */
+.comprovante-barra-acoes {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.25rem;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 16px rgba(3, 36, 71, 0.04);
+}
+
+.comprovante-filtro-semestre {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.comprovante-filtro-semestre label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--blue-950);
+}
+
+.comprovante-filtro-semestre select {
+  padding: 0.5rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  color: var(--ink);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.comprovante-botoes {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.btn-imprimir {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.6rem 1.25rem;
+  background: var(--blue-800);
+  color: var(--white);
+  border: 1px solid var(--blue-800);
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-imprimir:hover {
+  background: var(--blue-950);
+  transform: translateY(-1px);
+}
+
+.comprovante-erro {
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.25rem;
+  border-left: 4px solid var(--red-700);
+  background: var(--red-100);
+  color: #8d1c13;
+  font-size: 0.85rem;
+  border-radius: var(--radius-sm);
+}
+
+/* ============================================================ */
+/* FOLHA A4 - MODELO INSTITUCIONAL UNEB SAGRES                  */
+/* ============================================================ */
+.sagres-folha-a4 {
+  background: #ffffff;
+  border: 1px solid #d0d7de;
+  border-radius: 4px;
+  padding: 2.5rem 3rem;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+  color: #000000;
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.35;
+  font-size: 11px;
+}
+
+/* Cabeçalho */
+.sagres-cabecalho {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.sagres-marca-uneb {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 90px;
+}
+
+.sagres-marca-letra {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  background: #002b66;
+  color: #fdb913;
+  font-size: 1.8rem;
+  font-weight: 900;
+  border-radius: 6px;
+  font-family: Georgia, serif;
+}
+
+.sagres-marca-uneb strong {
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  color: #002b66;
+  margin-top: 0.2rem;
+}
+
+.sagres-marca-uneb small {
+  font-size: 0.45rem;
+  text-align: center;
+  color: #555;
+  line-height: 1.1;
+  margin-top: 0.1rem;
+}
+
+.sagres-cabecalho-titulos {
+  flex: 1;
+  text-align: center;
+}
+
+.sagres-cabecalho-titulos h2 {
+  font-size: 13px;
+  font-weight: 800;
+  margin: 0;
+  color: #000000;
+}
+
+.sagres-cabecalho-titulos h3 {
+  font-size: 12px;
+  font-weight: 700;
+  margin: 0.15rem 0;
+  color: #000000;
+}
+
+.sagres-cabecalho-titulos h1 {
+  font-size: 12px;
+  font-weight: 800;
+  margin: 0.15rem 0 0;
+  color: #000000;
+}
+
+.sagres-cabecalho-emissao {
+  text-align: right;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.sagres-cabecalho-emissao p {
+  margin: 0 0 0.2rem;
+}
+
+/* Quadro de Identificação do Aluno */
+.sagres-quadro-identificacao {
+  margin-bottom: 1rem;
+}
+
+.sagres-tabela-identificacao {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #000000;
+}
+
+.sagres-tabela-identificacao td {
+  border: 1px solid #000000;
+  padding: 0.35rem 0.5rem;
+  vertical-align: top;
+}
+
+.campo-label {
+  display: block;
+  font-size: 9px;
+  font-weight: bold;
+  color: #000000;
+  margin-bottom: 0.15rem;
+}
+
+.campo-valor {
+  display: block;
+  font-size: 11px;
+  color: #000000;
+}
+
+/* Tabela de Disciplinas */
+.sagres-secao-disciplinas {
+  margin-bottom: 1.25rem;
+}
+
+.sagres-tabela-disciplinas {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #000000;
+  font-size: 10px;
+}
+
+.sagres-tabela-disciplinas th,
+.sagres-tabela-disciplinas td {
+  border: 1px solid #000000;
+  padding: 0.3rem 0.45rem;
+  text-align: left;
+}
+
+.sagres-tabela-disciplinas thead th {
+  background: #f1f1f1;
+  font-weight: bold;
+  text-align: left;
+  font-size: 10px;
+}
+
+.sagres-tabela-disciplinas tfoot td {
+  background: #fafafa;
+}
+
+/* Tabela de Grade Horária Semanal */
+.sagres-secao-grade {
+  margin-bottom: 1rem;
+}
+
+.sagres-tabela-grade-horaria {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #000000;
+  font-size: 10px;
+  text-align: center;
+}
+
+.sagres-tabela-grade-horaria th,
+.sagres-tabela-grade-horaria td {
+  border: 1px solid #000000;
+  padding: 0.25rem 0.35rem;
+}
+
+.sagres-tabela-grade-horaria thead th {
+  background: #f1f1f1;
+  font-weight: bold;
+}
+
+.sagres-faixa-texto {
+  font-weight: 500;
+  white-space: nowrap;
+  width: 15%;
+}
+
+.sagres-grade-celula {
+  width: 14%;
+  height: 22px;
+}
+
+.sagres-grade-celula strong {
+  font-size: 9.5px;
+}
+
+/* Aviso Normativo */
+.sagres-aviso-normativo {
+  font-size: 9px;
+  font-weight: bold;
+  margin: 0.85rem 0 2rem;
+  line-height: 1.3;
+}
+
+/* Seção de Assinaturas */
+.sagres-secao-assinaturas {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+  padding-top: 1rem;
+}
+
+.sagres-assinatura-bloco {
+  width: 45%;
+  text-align: center;
+  font-size: 10px;
+}
+
+.sagres-linha-assinatura {
+  border-top: 1px solid #000000;
+  margin-bottom: 0.35rem;
+}
+
+.sagres-assinatura-bloco strong,
+.sagres-assinatura-bloco span {
+  display: block;
+}
+
+/* Rodapé Final */
+.sagres-rodape-doc {
+  margin-top: 1rem;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.sagres-data-cidade {
+  margin: 0 0 0.85rem;
+}
+
+.sagres-mensagem-bloco {
+  margin-bottom: 0.65rem;
+}
+
+.sagres-mensagem-bloco p {
+  margin: 0.15rem 0 0;
+}
+
+.sagres-autenticacao-bloco code {
+  display: block;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 10.5px;
+  margin-top: 0.2rem;
+  letter-spacing: 0.05em;
+}
+
+/* ============================================================ */
+/* REGRAS CSS DE IMPRESSÃO (@media print)                        */
+/* ============================================================ */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm 15mm;
+  }
+
+  /* Oculta completamente navegação, menu, header e footer do app */
+  .sidebar,
+  .app-header,
+  .app-footer,
+  .sidebar-backdrop,
+  .no-print,
+  .comprovante-barra-acoes,
+  .skip-link {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 10.5px !important;
+  }
+
+  .app-shell,
+  .app-shell__body,
+  .app-content,
+  .comprovante-wrapper {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .sagres-folha-a4 {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+
+  .sagres-tabela-identificacao,
+  .sagres-tabela-disciplinas,
+  .sagres-tabela-grade-horaria {
+    border-color: #000000 !important;
+  }
+
+  .sagres-tabela-identificacao td,
+  .sagres-tabela-disciplinas th,
+  .sagres-tabela-disciplinas td,
+  .sagres-tabela-grade-horaria th,
+  .sagres-tabela-grade-horaria td {
+    border-color: #000000 !important;
+    color: #000000 !important;
+  }
+
+  .sagres-tabela-disciplinas thead th,
+  .sagres-tabela-grade-horaria thead th {
+    background: #f1f1f1 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .sagres-marca-letra {
+    background: #002b66 !important;
+    color: #fdb913 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

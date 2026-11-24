@@ -34,4 +34,8 @@ export const alunoService = {
     const { data } = await api.patch<{ id_aluno: number; status: string }>(`/alunos/${id}/status`, { status });
     return data;
   },
+  async obterMeuPerfil(): Promise<Aluno> {
+    const { data } = await api.get<Aluno>('/alunos/me');
+    return data;
+  },
 };

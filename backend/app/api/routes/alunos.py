@@ -7,11 +7,12 @@ from sqlalchemy.orm import Session
 from app.api.deps import require_perfis
 from app.db.session import get_db
 from app.models.pessoas import Aluno
+from app.models.usuario import Usuario
 from app.schemas.aluno import AlunoDetalhe, AlunoStatusUpdate, AlunoUpdate
 
 gestor = Depends(require_perfis("SECRETARIA", "COORDENACAO", "ADMIN"))
 
-router = APIRouter(prefix="/alunos", tags=["alunos"], dependencies=[gestor])
+router = APIRouter(prefix="/alunos", tags=["alunos"])
 
 
 def _detalhe(aluno: Aluno) -> AlunoDetalhe:
@@ -34,12 +35,23 @@ def _obter(db: Session, id_aluno: int) -> Aluno:
     return aluno
 
 
-@router.get("/{id_aluno}", response_model=AlunoDetalhe)
+@router.get("/me", response_model=AlunoDetalhe)
+def consultar_meu_perfil(
+    usuario: Usuario = Depends(require_perfis("ALUNO")),
+    db: Session = Depends(get_db),
+):
+    aluno = db.scalar(select(Aluno).where(Aluno.id_usuario == usuario.id_usuario))
+    if aluno is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Este usuário não possui cadastro de aluno")
+    return _detalhe(aluno)
+
+
+@router.get("/{id_aluno}", response_model=AlunoDetalhe, dependencies=[gestor])
 def consultar_aluno(id_aluno: int, db: Session = Depends(get_db)):
     return _detalhe(_obter(db, id_aluno))
 
 
-@router.put("/{id_aluno}", response_model=AlunoDetalhe)
+@router.put("/{id_aluno}", response_model=AlunoDetalhe, dependencies=[gestor])
 def editar_aluno(id_aluno: int, dados: AlunoUpdate, db: Session = Depends(get_db)):
     aluno = _obter(db, id_aluno)
 
@@ -63,7 +75,7 @@ def editar_aluno(id_aluno: int, dados: AlunoUpdate, db: Session = Depends(get_db
     return _detalhe(aluno)
 
 
-@router.patch("/{id_aluno}/status", response_model=AlunoDetalhe)
+@router.patch("/{id_aluno}/status", response_model=AlunoDetalhe, dependencies=[gestor])
 def alterar_status(id_aluno: int, dados: AlunoStatusUpdate, db: Session = Depends(get_db)):
     aluno = _obter(db, id_aluno)
     aluno.usuario.status = dados.status

@@ -1,11 +1,12 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { useAuth } from '../hooks/useAuth';
+import { MiniCalendarioAulas } from '../components/MiniCalendarioAulas';
 
 const services = [
   { title: 'Notas e frequência', description: 'Consulte avaliações, médias e presença.', to: '/aluno/consulta', icon: 'chart' as const },
-  { title: 'Próxima aula', description: 'Engenharia de Software · Sala 12', to: '/aluno/consulta', icon: 'clock' as const },
-  { title: 'Documentos', description: 'Veja como obter atestados e comprovantes.', to: '/aluno/documentos', icon: 'file' as const },
+  { title: 'Comprovante de matrícula', description: 'Emita ou salve em PDF seu comprovante oficial.', to: '/aluno/comprovante', icon: 'file' as const },
+  { title: 'Documentos e atestados', description: 'Veja como solicitar atestados e requerimentos.', to: '/aluno/documentos', icon: 'file' as const },
 ];
 
 export function DashboardAluno() {
@@ -45,6 +46,8 @@ export function DashboardAluno() {
           ))}
         </div>
       </section>
+
+      <MiniCalendarioAulas />
 
       <section className="dashboard-grid" aria-label="Informações do semestre">
         <article className="dashboard-card">

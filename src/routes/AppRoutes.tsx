@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { Configuracoes } from '../pages/Configuracoes';
 import { DocumentosAluno } from '../pages/DocumentosAluno';
+import { ComprovanteMatricula } from '../pages/matriculas/ComprovanteMatricula';
 import { CoreLayout } from '../components/CoreLayout';
 import { MatriculaOnline } from '../pages/matriculas/MatriculaOnline';
 import { DashboardAluno } from '../pages/DashboardAluno';
@@ -32,6 +33,7 @@ export function AppRoutes() {
           <Route path="/aluno/documentos" element={<DocumentosAluno />} />
           <Route path="/aluno/dashboard" element={<DashboardAluno />} />
           <Route path="/aluno/matriculas" element={<MatriculaOnline />} />
+          <Route path="/aluno/comprovante" element={<ComprovanteMatricula />} />
         </Route>
       </Route>
 
