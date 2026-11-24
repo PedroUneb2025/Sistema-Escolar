@@ -169,4 +169,61 @@ describe('ComprovanteMatricula - Comprovante Oficial UNEB SAGRES', () => {
 
     expect(window.print).toHaveBeenCalledTimes(1);
   });
+
+  it('exibe a grade semanal com horários dinâmicos (ex: 08:00 - 10:00 na SEG) e reflete alterações automaticamente', async () => {
+    const matriculasComProg1 = [
+      {
+        id_matricula_turma: 201,
+        id_turma: 10,
+        codigo_turma: 'PROG1-A',
+        semestre_letivo: '2026.2',
+        disciplina_codigo: 'PROG1',
+        disciplina_nome: 'Programação I',
+        professor_nome: 'Prof. Teste',
+        sala_codigo: 'A101',
+        dia_semana: 'SEG',
+        hora_inicio: '08:00:00',
+        hora_fim: '10:00:00',
+        situacao: 'matriculado',
+      },
+      {
+        id_matricula_turma: 202,
+        id_turma: 11,
+        codigo_turma: 'BD01-A',
+        semestre_letivo: '2026.2',
+        disciplina_codigo: 'BD01',
+        disciplina_nome: 'Banco de Dados',
+        professor_nome: 'Prof. Teste 2',
+        sala_codigo: 'A102',
+        dia_semana: 'QUA',
+        hora_inicio: '10:00:00',
+        hora_fim: '12:00:00',
+        situacao: 'matriculado',
+      },
+    ];
+
+    vi.spyOn(alunoService, 'obterMeuPerfil').mockResolvedValueOnce(mockPerfilAluno);
+    vi.spyOn(api, 'get').mockResolvedValueOnce({ data: matriculasComProg1 });
+
+    render(
+      <MemoryRouter>
+        <ComprovanteMatricula />
+      </MemoryRouter>
+    );
+
+    await screen.findByRole('heading', { name: 'COMPROVANTE DE MATRÍCULA' });
+
+    // A faixa dinâmica 08:00 - 10:00 deve aparecer como linha na grade
+    expect(screen.getByText('08:00 - 10:00')).toBeVisible();
+    // A faixa dinâmica 10:00 - 12:00 também deve aparecer
+    expect(screen.getByText('10:00 - 12:00')).toBeVisible();
+
+    // Na tabela de grade, PROG1 e PROG1-A devem estar visíveis
+    expect(screen.getAllByText('PROG1').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('PROG1-A').length).toBeGreaterThanOrEqual(1);
+
+    // E a matéria de quarta-feira (BD01) também deve estar visível
+    expect(screen.getAllByText('BD01').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('BD01-A').length).toBeGreaterThanOrEqual(1);
+  });
 });

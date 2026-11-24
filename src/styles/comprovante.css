@@ -275,11 +275,27 @@
 
 .sagres-grade-celula {
   width: 14%;
-  height: 22px;
+  height: 24px;
+  vertical-align: middle;
 }
 
-.sagres-grade-celula strong {
-  font-size: 9.5px;
+.sagres-grade-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.15;
+}
+
+.sagres-grade-cod {
+  font-size: 10px;
+  font-weight: 800;
+  color: #000000;
+}
+
+.sagres-grade-turma {
+  font-size: 8.5px;
+  color: #333333;
 }
 
 /* Aviso Normativo */

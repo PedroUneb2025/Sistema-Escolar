@@ -25,6 +25,13 @@ interface TurmaComprovante {
   situacao: string;
 }
 
+interface TurmaHorarioItem {
+  diaSemana: string;
+  horarioInicio: string;
+  horarioFim: string;
+  sala?: string;
+}
+
 interface MatriculaTurmaInfo {
   id?: string;
   codigo?: string;
@@ -35,6 +42,7 @@ interface MatriculaTurmaInfo {
   horarioInicio?: string;
   horarioFim?: string;
   semestre?: string;
+  horarios?: TurmaHorarioItem[];
 }
 
 interface MatriculaApiItem {
@@ -45,7 +53,7 @@ interface MatriculaApiItem {
   disciplina_nome?: string;
   professor_nome?: string;
   sala_codigo?: string;
-  dia_semana?: string;
+  dia_semana?: string | number;
   hora_inicio?: string;
   hora_fim?: string;
   semestre_letivo?: string;
@@ -66,21 +74,39 @@ const FAIXAS_HORARIOS_PADRAO = [
   '14:20 - 15:10',
 ];
 
-function normalizarSiglaDia(diaRaw: string | undefined): 'SEG' | 'TER' | 'QUA' | 'QUI' | 'SEX' | 'SAB' | null {
-  if (!diaRaw) return null;
-  const limpo = diaRaw.trim().toUpperCase();
-  if (['SEG', 'SEGUNDA', 'SEGUNDA-FEIRA'].some(s => limpo.startsWith(s))) return 'SEG';
-  if (['TER', 'TERCA', 'TERÇA', 'TERÇA-FEIRA', 'TERCA-FEIRA'].some(s => limpo.startsWith(s))) return 'TER';
-  if (['QUA', 'QUARTA', 'QUARTA-FEIRA'].some(s => limpo.startsWith(s))) return 'QUA';
-  if (['QUI', 'QUINTA', 'QUINTA-FEIRA'].some(s => limpo.startsWith(s))) return 'QUI';
-  if (['SEX', 'SEXTA', 'SEXTA-FEIRA'].some(s => limpo.startsWith(s))) return 'SEX';
-  if (['SAB', 'SABADO', 'SÁBADO'].some(s => limpo.startsWith(s))) return 'SAB';
+function normalizarSiglaDia(diaRaw: string | number | undefined): 'SEG' | 'TER' | 'QUA' | 'QUI' | 'SEX' | 'SAB' | null {
+  if (diaRaw === undefined || diaRaw === null) return null;
+  if (typeof diaRaw === 'number') {
+    const numMap: Record<number, 'SEG' | 'TER' | 'QUA' | 'QUI' | 'SEX' | 'SAB'> = {
+      1: 'SEG',
+      2: 'TER',
+      3: 'QUA',
+      4: 'QUI',
+      5: 'SEX',
+      6: 'SAB',
+    };
+    return numMap[diaRaw] || null;
+  }
+  const limpo = String(diaRaw).trim().toUpperCase();
+  if (limpo === '1' || ['SEG', 'SEGUNDA'].some(s => limpo.startsWith(s))) return 'SEG';
+  if (limpo === '2' || ['TER', 'TERCA', 'TERÇA'].some(s => limpo.startsWith(s))) return 'TER';
+  if (limpo === '3' || ['QUA', 'QUARTA'].some(s => limpo.startsWith(s))) return 'QUA';
+  if (limpo === '4' || ['QUI', 'QUINTA'].some(s => limpo.startsWith(s))) return 'QUI';
+  if (limpo === '5' || ['SEX', 'SEXTA'].some(s => limpo.startsWith(s))) return 'SEX';
+  if (limpo === '6' || ['SAB', 'SABADO', 'SÁBADO'].some(s => limpo.startsWith(s))) return 'SAB';
   return null;
 }
 
 function formatarHora(h: string | undefined): string {
   if (!h) return '';
-  return h.slice(0, 5);
+  const limpo = String(h).trim();
+  const partes = limpo.split(':');
+  if (partes.length >= 2) {
+    const hora = partes[0].padStart(2, '0');
+    const min = partes[1].padStart(2, '0');
+    return `${hora}:${min}`;
+  }
+  return limpo.slice(0, 5);
 }
 
 export function ComprovanteMatricula() {
@@ -144,27 +170,58 @@ export function ComprovanteMatricula() {
           if (Array.isArray(resp.data)) {
             listaTurmas = resp.data
               .filter(m => m.situacao === 'matriculado')
-              .map(m => {
+              .flatMap((m: MatriculaApiItem): TurmaComprovante[] => {
+                const cod = m.disciplina_codigo || m.turma?.codigo?.split('-')[0] || m.codigo_turma?.split('-')[0] || 'DISC';
+                const turmaCod = m.codigo_turma ?? m.turma?.codigo ?? 'T01';
+                const discNome = m.disciplina_nome ?? m.turma?.disciplina ?? 'Disciplina';
+                const prof = m.professor_nome ?? m.turma?.professor ?? 'A definir';
+                const sala = m.sala_codigo ?? m.turma?.sala ?? '004 / DCET-II';
+                const sem = m.semestre_letivo ?? m.turma?.semestre ?? '2026.2';
+                const sit = m.situacao || 'matriculado';
+
+                if (m.turma?.horarios && Array.isArray(m.turma.horarios) && m.turma.horarios.length > 0) {
+                  return m.turma.horarios.map((h, hIdx) => {
+                    const sigla = normalizarSiglaDia(h.diaSemana) || 'SEG';
+                    const ini = formatarHora(h.horarioInicio || '08:00');
+                    const fim = formatarHora(h.horarioFim || '10:00');
+                    return {
+                      idMatricula: `${m.id_matricula_turma ?? m.id_turma ?? 'm'}-${hIdx}`,
+                      codigoTurma: turmaCod,
+                      disciplinaCodigo: cod,
+                      disciplinaNome: discNome,
+                      professorNome: prof,
+                      sala: h.sala || sala,
+                      diaSemana: sigla,
+                      diaSemanaSigla: sigla,
+                      horarioInicio: ini,
+                      horarioFim: fim,
+                      cargaHoraria: 60,
+                      creditos: 0,
+                      semestre: sem,
+                      situacao: sit,
+                    };
+                  });
+                }
+
                 const sigla = normalizarSiglaDia(m.dia_semana || m.turma?.diaSemana) || 'SEG';
-                const ini = formatarHora(m.hora_inicio || m.turma?.horarioInicio || '07:30');
-                const fim = formatarHora(m.hora_fim || m.turma?.horarioFim || '09:10');
-                const cod = m.disciplina_codigo || m.turma?.codigo?.split('-')[0] || 'ET0021';
-                return {
-                  idMatricula: m.id_matricula_turma ?? m.id_turma ?? Math.random(),
-                  codigoTurma: m.codigo_turma ?? m.turma?.codigo ?? 'T01',
+                const ini = formatarHora(m.hora_inicio || m.turma?.horarioInicio || '08:00');
+                const fim = formatarHora(m.hora_fim || m.turma?.horarioFim || '10:00');
+                return [{
+                  idMatricula: String(m.id_matricula_turma ?? m.id_turma ?? Math.random()),
+                  codigoTurma: turmaCod,
                   disciplinaCodigo: cod,
-                  disciplinaNome: m.disciplina_nome ?? m.turma?.disciplina ?? 'Disciplina',
-                  professorNome: m.professor_nome ?? m.turma?.professor ?? 'A definir',
-                  sala: m.sala_codigo ?? m.turma?.sala ?? '004 / DCET-II',
+                  disciplinaNome: discNome,
+                  professorNome: prof,
+                  sala: sala,
                   diaSemana: sigla,
                   diaSemanaSigla: sigla,
                   horarioInicio: ini,
                   horarioFim: fim,
                   cargaHoraria: 60,
                   creditos: 0,
-                  semestre: m.semestre_letivo ?? m.turma?.semestre ?? '2026.2',
-                  situacao: m.situacao || 'matriculado',
-                };
+                  semestre: sem,
+                  situacao: sit,
+                }];
               });
           }
         } catch {
@@ -234,6 +291,21 @@ export function ComprovanteMatricula() {
       t => t.situacao === 'matriculado' && (!semestreSelecionado || t.semestre === semestreSelecionado)
     );
   }, [turmas, semestreSelecionado]);
+
+  // Faixas de horários para a grade semanal: dinâmico baseado nas turmas do semestre
+  const faixasHorarios = useMemo(() => {
+    const slots = new Set<string>();
+    turmasFiltradas.forEach(t => {
+      if (t.horarioInicio && t.horarioFim) {
+        slots.add(`${t.horarioInicio} - ${t.horarioFim}`);
+      }
+    });
+    const lista = Array.from(slots);
+    if (lista.length === 0) {
+      return FAIXAS_HORARIOS_PADRAO;
+    }
+    return lista.sort();
+  }, [turmasFiltradas]);
 
   // Lista única de disciplinas para a tabela superior
   const disciplinasUnicas = useMemo(() => {
@@ -434,18 +506,28 @@ export function ComprovanteMatricula() {
               </tr>
             </thead>
             <tbody>
-              {FAIXAS_HORARIOS_PADRAO.map(faixa => {
-                const [iniFaixa] = faixa.split(' - ');
+              {faixasHorarios.map(faixa => {
+                const [iniFaixa, fimFaixa] = faixa.split(' - ');
                 return (
                   <tr key={faixa}>
                     <td className="sagres-faixa-texto">{faixa}</td>
                     {DIAS_GRADE.map(dia => {
-                      const aula = turmasFiltradas.find(
-                        t => t.diaSemanaSigla === dia && t.horarioInicio === iniFaixa
+                      const aulasNesteSlot = turmasFiltradas.filter(
+                        t =>
+                          t.diaSemanaSigla === dia &&
+                          ((t.horarioInicio === iniFaixa && t.horarioFim === fimFaixa) ||
+                            t.horarioInicio === iniFaixa)
                       );
                       return (
                         <td key={dia} className="sagres-grade-celula">
-                          {aula ? <strong>{aula.disciplinaCodigo}</strong> : ''}
+                          {aulasNesteSlot.map((aula, idx) => (
+                            <div key={`${aula.idMatricula}-${idx}`} className="sagres-grade-item">
+                              <strong className="sagres-grade-cod">{aula.disciplinaCodigo}</strong>
+                              {aula.codigoTurma && (
+                                <small className="sagres-grade-turma">{aula.codigoTurma}</small>
+                              )}
+                            </div>
+                          ))}
                         </td>
                       );
                     })}
