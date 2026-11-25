@@ -2,112 +2,27 @@ import { useEffect, useState, useMemo, useId } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../services/api';
 import { alunoService, type Aluno } from '../../services/alunoService';
-import { consultaAcademicaService } from '../../services/consultaAcademicaService';
+import { z } from 'zod';
 import { useAuth } from '../../hooks/useAuth';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { Icon } from '../../components/Icon';
 import '../../styles/comprovante.css';
 
-interface TurmaComprovante {
-  idMatricula: number | string;
-  codigoTurma: string;
-  disciplinaCodigo: string;
-  disciplinaNome: string;
-  professorNome: string;
-  sala: string;
-  diaSemana: string;
-  diaSemanaSigla: 'SEG' | 'TER' | 'QUA' | 'QUI' | 'SEX' | 'SAB';
-  horarioInicio: string;
-  horarioFim: string;
-  cargaHoraria: number;
-  creditos: number;
-  semestre: string;
-  situacao: string;
-}
-
-interface TurmaHorarioItem {
-  diaSemana: string;
-  horarioInicio: string;
-  horarioFim: string;
-  sala?: string;
-}
-
-interface MatriculaTurmaInfo {
-  id?: string;
-  codigo?: string;
-  disciplina?: string;
-  professor?: string;
-  sala?: string;
-  diaSemana?: string;
-  horarioInicio?: string;
-  horarioFim?: string;
-  semestre?: string;
-  horarios?: TurmaHorarioItem[];
-}
-
-interface MatriculaApiItem {
-  id_matricula_turma?: number;
-  id_turma?: number;
-  codigo_turma?: string;
-  disciplina_codigo?: string;
-  disciplina_nome?: string;
-  professor_nome?: string;
-  sala_codigo?: string;
-  dia_semana?: string | number;
-  hora_inicio?: string;
-  hora_fim?: string;
-  semestre_letivo?: string;
-  situacao?: string;
-  turma?: MatriculaTurmaInfo;
-}
-
 const DIAS_GRADE = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'] as const;
-
-const FAIXAS_HORARIOS_PADRAO = [
-  '07:30 - 08:20',
-  '08:20 - 09:10',
-  '09:10 - 10:00',
-  '10:00 - 10:50',
-  '10:50 - 11:40',
-  '11:40 - 12:30',
-  '13:30 - 14:20',
-  '14:20 - 15:10',
-];
-
-function normalizarSiglaDia(diaRaw: string | number | undefined): 'SEG' | 'TER' | 'QUA' | 'QUI' | 'SEX' | 'SAB' | null {
-  if (diaRaw === undefined || diaRaw === null) return null;
-  if (typeof diaRaw === 'number') {
-    const numMap: Record<number, 'SEG' | 'TER' | 'QUA' | 'QUI' | 'SEX' | 'SAB'> = {
-      1: 'SEG',
-      2: 'TER',
-      3: 'QUA',
-      4: 'QUI',
-      5: 'SEX',
-      6: 'SAB',
-    };
-    return numMap[diaRaw] || null;
-  }
-  const limpo = String(diaRaw).trim().toUpperCase();
-  if (limpo === '1' || ['SEG', 'SEGUNDA'].some(s => limpo.startsWith(s))) return 'SEG';
-  if (limpo === '2' || ['TER', 'TERCA', 'TERÇA'].some(s => limpo.startsWith(s))) return 'TER';
-  if (limpo === '3' || ['QUA', 'QUARTA'].some(s => limpo.startsWith(s))) return 'QUA';
-  if (limpo === '4' || ['QUI', 'QUINTA'].some(s => limpo.startsWith(s))) return 'QUI';
-  if (limpo === '5' || ['SEX', 'SEXTA'].some(s => limpo.startsWith(s))) return 'SEX';
-  if (limpo === '6' || ['SAB', 'SABADO', 'SÁBADO'].some(s => limpo.startsWith(s))) return 'SAB';
-  return null;
-}
-
-function formatarHora(h: string | undefined): string {
-  if (!h) return '';
-  const limpo = String(h).trim();
-  const partes = limpo.split(':');
-  if (partes.length >= 2) {
-    const hora = partes[0].padStart(2, '0');
-    const min = partes[1].padStart(2, '0');
-    return `${hora}:${min}`;
-  }
-  return limpo.slice(0, 5);
-}
+const hora = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/).transform(valor => valor.slice(0, 5));
+const turmaSchema = z.object({
+  id_matricula_turma: z.number().int().positive(),
+  semestre_letivo: z.string().min(1),
+  codigo_turma: z.string().min(1),
+  disciplina_codigo: z.string().min(1),
+  disciplina_nome: z.string().min(1),
+  sala_codigo: z.string(),
+  dia_semana: z.enum(DIAS_GRADE),
+  hora_inicio: hora,
+  hora_fim: hora,
+  situacao: z.string(),
+});
+type TurmaComprovante = z.infer<typeof turmaSchema>;
 
 export function ComprovanteMatricula() {
   const { user } = useAuth();
@@ -150,105 +65,11 @@ export function ComprovanteMatricula() {
         }
         setAluno(perfilAluno);
 
-        let listaTurmas: TurmaComprovante[] = [];
-
-        try {
-          const resp = await api.get<MatriculaApiItem[]>('/matriculas/minhas');
-          if (Array.isArray(resp.data)) {
-            listaTurmas = resp.data
-              .filter(m => m.situacao === 'matriculado')
-              .flatMap((m: MatriculaApiItem): TurmaComprovante[] => {
-                const cod = m.disciplina_codigo || m.turma?.codigo?.split('-')[0] || m.codigo_turma?.split('-')[0] || 'DISC';
-                const turmaCod = m.codigo_turma ?? m.turma?.codigo ?? 'T01';
-                const discNome = m.disciplina_nome ?? m.turma?.disciplina ?? 'Disciplina';
-                const prof = m.professor_nome ?? m.turma?.professor ?? 'A definir';
-                const sala = m.sala_codigo ?? m.turma?.sala ?? '004 / DCET-II';
-                const sem = m.semestre_letivo ?? m.turma?.semestre ?? '2026.2';
-                const sit = m.situacao || 'matriculado';
-
-                if (m.turma?.horarios && Array.isArray(m.turma.horarios) && m.turma.horarios.length > 0) {
-                  return m.turma.horarios.map((h, hIdx) => {
-                    const sigla = normalizarSiglaDia(h.diaSemana) || 'SEG';
-                    const ini = formatarHora(h.horarioInicio || '08:00');
-                    const fim = formatarHora(h.horarioFim || '10:00');
-                    return {
-                      idMatricula: `${m.id_matricula_turma ?? m.id_turma ?? 'm'}-${hIdx}`,
-                      codigoTurma: turmaCod,
-                      disciplinaCodigo: cod,
-                      disciplinaNome: discNome,
-                      professorNome: prof,
-                      sala: h.sala || sala,
-                      diaSemana: sigla,
-                      diaSemanaSigla: sigla,
-                      horarioInicio: ini,
-                      horarioFim: fim,
-                      cargaHoraria: 60,
-                      creditos: 0,
-                      semestre: sem,
-                      situacao: sit,
-                    };
-                  });
-                }
-
-                const sigla = normalizarSiglaDia(m.dia_semana || m.turma?.diaSemana) || 'SEG';
-                const ini = formatarHora(m.hora_inicio || m.turma?.horarioInicio || '08:00');
-                const fim = formatarHora(m.hora_fim || m.turma?.horarioFim || '10:00');
-                return [{
-                  idMatricula: String(m.id_matricula_turma ?? m.id_turma ?? Math.random()),
-                  codigoTurma: turmaCod,
-                  disciplinaCodigo: cod,
-                  disciplinaNome: discNome,
-                  professorNome: prof,
-                  sala: sala,
-                  diaSemana: sigla,
-                  diaSemanaSigla: sigla,
-                  horarioInicio: ini,
-                  horarioFim: fim,
-                  cargaHoraria: 60,
-                  creditos: 0,
-                  semestre: sem,
-                  situacao: sit,
-                }];
-              });
-          }
-        } catch {
-          const itensAcademico = await consultaAcademicaService.obterConsultaAcademica();
-          listaTurmas = itensAcademico
-            .filter(item => item.situacao === 'matriculado')
-            .flatMap(item => {
-              return (item.horarios || []).map(h => {
-                const sigla = normalizarSiglaDia(h.diaSemana) || 'SEG';
-                const ini = formatarHora(h.horarioInicio || '07:30');
-                const fim = formatarHora(h.horarioFim || '09:10');
-                return {
-                  idMatricula: `${item.idMatricula}-${sigla}`,
-                  codigoTurma: item.codigoTurma,
-                  disciplinaCodigo: item.disciplinaCodigo,
-                  disciplinaNome: item.disciplinaNome,
-                  professorNome: item.professorNome,
-                  sala: h.sala || item.sala || '004 / DCET-II',
-                  diaSemana: sigla,
-                  diaSemanaSigla: sigla,
-                  horarioInicio: ini,
-                  horarioFim: fim,
-                  cargaHoraria: 60,
-                  creditos: 0,
-                  semestre: item.semestre,
-                  situacao: item.situacao,
-                };
-              });
-            });
-        }
-
+        const { data } = await api.get('/matriculas/minhas');
+        const listaTurmas = z.array(turmaSchema).parse(data).filter(t => t.situacao === 'matriculado');
         if (ativo) {
           setTurmas(listaTurmas);
-
-          const semestres = Array.from(new Set(listaTurmas.map(t => t.semestre)));
-          if (semestres.length > 0) {
-            setSemestreSelecionado(semestres[0]);
-          } else {
-            setSemestreSelecionado('2026.2');
-          }
+          setSemestreSelecionado(listaTurmas[0]?.semestre_letivo ?? '');
         }
       } catch {
         if (ativo) {
@@ -267,15 +88,14 @@ export function ComprovanteMatricula() {
   }, [user]);
 
   const semestresDisponiveis = useMemo(() => {
-    const lista = Array.from(new Set(turmas.map(t => t.semestre)));
-    if (lista.length === 0) return ['2026.2'];
+    const lista = Array.from(new Set(turmas.map(t => t.semestre_letivo)));
     return lista;
   }, [turmas]);
 
   // Filtra as turmas do semestre selecionado com situação 'matriculado'
   const turmasFiltradas = useMemo(() => {
     return turmas.filter(
-      t => t.situacao === 'matriculado' && (!semestreSelecionado || t.semestre === semestreSelecionado)
+      t => t.situacao === 'matriculado' && (!semestreSelecionado || t.semestre_letivo === semestreSelecionado)
     );
   }, [turmas, semestreSelecionado]);
 
@@ -283,31 +103,13 @@ export function ComprovanteMatricula() {
   const faixasHorarios = useMemo(() => {
     const slots = new Set<string>();
     turmasFiltradas.forEach(t => {
-      if (t.horarioInicio && t.horarioFim) {
-        slots.add(`${t.horarioInicio} - ${t.horarioFim}`);
+      if (t.hora_inicio && t.hora_fim) {
+        slots.add(`${t.hora_inicio} - ${t.hora_fim}`);
       }
     });
     const lista = Array.from(slots);
-    if (lista.length === 0) {
-      return FAIXAS_HORARIOS_PADRAO;
-    }
     return lista.sort();
   }, [turmasFiltradas]);
-
-  // Lista única de disciplinas para a tabela superior
-  const disciplinasUnicas = useMemo(() => {
-    const map = new Map<string, TurmaComprovante>();
-    turmasFiltradas.forEach(t => {
-      if (!map.has(t.disciplinaCodigo)) {
-        map.set(t.disciplinaCodigo, t);
-      }
-    });
-    return Array.from(map.values());
-  }, [turmasFiltradas]);
-
-  const totalCargaHoraria = useMemo(() => {
-    return disciplinasUnicas.reduce((acc, d) => acc + (d.cargaHoraria || 60), 0);
-  }, [disciplinasUnicas]);
 
   const acaoImprimir = () => {
     window.print();
@@ -331,6 +133,13 @@ export function ComprovanteMatricula() {
         <Link to="/aluno/documentos" className="secondary-button">Voltar para Documentos</Link>
       </div>
     );
+  }
+
+  if (!turmas.length) {
+    return <div className="comprovante-wrapper">
+      <p>Nenhuma matrícula ativa disponível para emitir o comprovante.</p>
+      <Link to="/aluno/documentos" className="secondary-button">Voltar para Documentos</Link>
+    </div>;
   }
 
   return (
@@ -409,31 +218,9 @@ export function ComprovanteMatricula() {
                   <span className="campo-label">Nome</span>
                   <span className="campo-valor">{aluno.nome_completo}</span>
                 </td>
-                <td style={{ width: '12%' }}>
-                  <span className="campo-label">Período</span>
-                  <span className="campo-valor">4º</span>
-                </td>
-                <td style={{ width: '13%' }}>
-                  <span className="campo-label">Ingresso</span>
-                  <span className="campo-valor">20251</span>
-                </td>
-                <td style={{ width: '13%' }}>
+                <td>
                   <span className="campo-label">Período Letivo</span>
                   <span className="campo-valor">{semestreSelecionado.replace('.', '')}</span>
-                </td>
-              </tr>
-              <tr>
-                <td colSpan={2}>
-                  <span className="campo-label">Curso</span>
-                  <span className="campo-valor">Engenharia de Software</span>
-                </td>
-                <td colSpan={2}>
-                  <span className="campo-label">Turno</span>
-                  <span className="campo-valor">Matutino</span>
-                </td>
-                <td>
-                  <span className="campo-label">Depto/Campus</span>
-                  <span className="campo-valor">DCET - CAMPUS II</span>
                 </td>
               </tr>
             </tbody>
@@ -448,41 +235,19 @@ export function ComprovanteMatricula() {
                 <th style={{ width: '12%' }}>Código</th>
                 <th style={{ width: '42%' }}>Nome da Disciplina</th>
                 <th style={{ width: '10%' }}>Classe</th>
-                <th style={{ width: '10%' }}>Crédito</th>
-                <th style={{ width: '12%' }}>Carga Horária</th>
                 <th style={{ width: '14%' }}>Sala/Depto</th>
               </tr>
             </thead>
             <tbody>
-              {disciplinasUnicas.length === 0 ? (
-                <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '1.5rem', color: '#666' }}>
-                    Nenhuma disciplina matriculada encontrada para o semestre {semestreSelecionado}.
-                  </td>
-                </tr>
-              ) : (
-                disciplinasUnicas.map(disc => (
-                  <tr key={disc.disciplinaCodigo}>
-                    <td>{disc.disciplinaCodigo}</td>
-                    <td>{disc.disciplinaNome}</td>
-                    <td>{disc.codigoTurma}</td>
-                    <td>{disc.creditos}</td>
-                    <td>{disc.cargaHoraria}</td>
-                    <td>{disc.sala}</td>
+              {turmasFiltradas.map(disc => (
+                  <tr key={disc.id_matricula_turma}>
+                    <td>{disc.disciplina_codigo}</td>
+                    <td>{disc.disciplina_nome}</td>
+                    <td>{disc.codigo_turma}</td>
+                    <td>{disc.sala_codigo}</td>
                   </tr>
-                ))
-              )}
+                ))}
             </tbody>
-            <tfoot>
-              <tr>
-                <td colSpan={3} style={{ textAlign: 'right', fontWeight: 'bold' }}>
-                  Total:
-                </td>
-                <td style={{ fontWeight: 'bold' }}>0</td>
-                <td style={{ fontWeight: 'bold' }}>{totalCargaHoraria}</td>
-                <td />
-              </tr>
-            </tfoot>
           </table>
         </section>
 
@@ -506,17 +271,16 @@ export function ComprovanteMatricula() {
                     {DIAS_GRADE.map(dia => {
                       const aulasNesteSlot = turmasFiltradas.filter(
                         t =>
-                          t.diaSemanaSigla === dia &&
-                          ((t.horarioInicio === iniFaixa && t.horarioFim === fimFaixa) ||
-                            t.horarioInicio === iniFaixa)
+                          t.dia_semana === dia &&
+                          t.hora_inicio === iniFaixa && t.hora_fim === fimFaixa
                       );
                       return (
                         <td key={dia} className="sagres-grade-celula">
                           {aulasNesteSlot.map((aula, idx) => (
-                            <div key={`${aula.idMatricula}-${idx}`} className="sagres-grade-item">
-                              <strong className="sagres-grade-cod">{aula.disciplinaCodigo}</strong>
-                              {aula.codigoTurma && (
-                                <small className="sagres-grade-turma">{aula.codigoTurma}</small>
+                            <div key={`${aula.id_matricula_turma}-${idx}`} className="sagres-grade-item">
+                              <strong className="sagres-grade-cod">{aula.disciplina_codigo}</strong>
+                              {aula.codigo_turma && (
+                                <small className="sagres-grade-turma">{aula.codigo_turma}</small>
                               )}
                             </div>
                           ))}
@@ -559,10 +323,6 @@ export function ComprovanteMatricula() {
             <p>Início das aulas do período letivo {semestreSelecionado}: Conforme calendário acadêmico oficial.</p>
           </div>
 
-          <div className="sagres-autenticacao-bloco">
-            <strong>Assinatura Eletrônica:</strong>
-            <code>{`c8436815275d860ee03833f106da${String(aluno.id_aluno).padStart(4, '0')}`}</code>
-          </div>
         </footer>
       </article>
       </div>

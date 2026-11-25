@@ -1,7 +1,6 @@
 import { api } from './api';
 import type { ItemConsultaAcademica } from '../types/consultaAcademica';
-import type { Turma } from '../types/turma';
-import axios from 'axios';
+import { isDemoSession } from './demoMode';
 
 // Dados acadêmicos padrão para aluno (modo teste / fallback quando o backend ainda não tiver as matrículas cadastradas)
 const dadosMockConsulta: ItemConsultaAcademica[] = [
@@ -140,59 +139,10 @@ function getStoredMock(): ItemConsultaAcademica[] {
 }
 
 export const consultaAcademicaService = {
-  /**
-   * Busca os dados acadêmicos unificados (disciplinas matriculadas, notas e horários).
-   * Conecta com os endpoints do backend `/academico/minhas-turmas` ou `/alunos/me/matriculas`.
-   * Se os endpoints ainda estiverem pendentes de deploy no backend pelo Dev Backend B,
-   * utiliza de forma segura e resiliente as informações das turmas disponíveis no sistema.
-   */
   async obterConsultaAcademica(): Promise<ItemConsultaAcademica[]> {
-    try {
-      // Tenta consumir o endpoint oficial do Dev Backend B
-      const response = await api.get<ItemConsultaAcademica[]>('/academico/minhas-turmas');
-      return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error) && (error.response?.status === 404 || !error.response)) {
-        // Tenta endpoint alternativo de matrículas
-        try {
-          const altResponse = await api.get<ItemConsultaAcademica[]>('/matriculas/me');
-          return altResponse.data;
-        } catch {
-          // Fallback resiliente que correlaciona com o turmaService se disponível
-          try {
-            const turmasResponse = await api.get<Turma[]>('/turmas');
-            if (Array.isArray(turmasResponse.data) && turmasResponse.data.length > 0) {
-              return turmasResponse.data.map((t, idx) => ({
-                idMatricula: idx + 1,
-                codigoTurma: t.codigo,
-                disciplinaCodigo: t.codigo.split('-')[0] || 'DISC',
-                disciplinaNome: t.disciplina,
-                professorNome: t.professor,
-                semestre: t.semestre,
-                sala: t.sala,
-                nota1: 8.0,
-                nota2: 8.5,
-                notaFinal: 8.3,
-                frequencia: 95,
-                situacao: 'matriculado',
-                horarios: [
-                  {
-                    diaSemana: t.diaSemana,
-                    horarioInicio: t.horarioInicio,
-                    horarioFim: t.horarioFim,
-                    sala: t.sala,
-                    codigoTurma: t.codigo,
-                  },
-                ],
-              }));
-            }
-          } catch {
-            // Continua para o mock padrão
-          }
-          return getStoredMock();
-        }
-      }
-      throw error;
-    }
+    if (isDemoSession()) return getStoredMock();
+    const { data } = await api.get<ItemConsultaAcademica[]>('/academico/minhas-turmas');
+    if (!Array.isArray(data)) throw new Error('Resposta acadêmica inválida.');
+    return data;
   },
 };

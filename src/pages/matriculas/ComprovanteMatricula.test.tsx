@@ -98,7 +98,7 @@ describe('ComprovanteMatricula - Comprovante Oficial UNEB SAGRES', () => {
     // Nome e Matrícula
     expect(screen.getByText('Aluno Demonstração')).toBeVisible();
     expect(screen.getByText('2026100123')).toBeVisible();
-    expect(screen.getByText('Engenharia de Software')).toBeVisible();
+    expect(screen.queryByText('Engenharia de Software')).not.toBeInTheDocument();
 
     // Disciplina matriculada do semestre padrão (2026.2)
     expect(screen.getByText('DESENVOLVIMENTO WEB II BACK-END')).toBeVisible();
@@ -124,6 +124,23 @@ describe('ComprovanteMatricula - Comprovante Oficial UNEB SAGRES', () => {
       expect(screen.queryByText('2026100123')).not.toBeInTheDocument();
     },
   );
+
+  it('impede a impressão quando a consulta de matrículas falha', async () => {
+    vi.spyOn(alunoService, 'obterMeuPerfil').mockResolvedValueOnce(mockPerfilAluno);
+    const obter = vi.spyOn(api, 'get').mockRejectedValue(new Error('offline'));
+    render(<MemoryRouter><ComprovanteMatricula /></MemoryRouter>);
+    expect(await screen.findByRole('alert')).toBeVisible();
+    expect(obter).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('article')).not.toBeInTheDocument();
+  });
+
+  it('orienta o aluno sem matrículas ativas', async () => {
+    vi.spyOn(alunoService, 'obterMeuPerfil').mockResolvedValueOnce(mockPerfilAluno);
+    vi.spyOn(api, 'get').mockResolvedValueOnce({ data: [] });
+    render(<MemoryRouter><ComprovanteMatricula /></MemoryRouter>);
+    expect(await screen.findByText(/Nenhuma matrícula ativa/)).toBeVisible();
+    expect(screen.queryByRole('button', { name: /imprimir/i })).not.toBeInTheDocument();
+  });
 
   it('GARANTE que o CPF NÃO aparece em nenhuma parte do comprovante ou da tela', async () => {
     vi.spyOn(alunoService, 'obterMeuPerfil').mockResolvedValueOnce(mockPerfilAluno);
@@ -213,7 +230,7 @@ describe('ComprovanteMatricula - Comprovante Oficial UNEB SAGRES', () => {
         professor_nome: 'Prof. Teste 2',
         sala_codigo: 'A102',
         dia_semana: 'QUA',
-        hora_inicio: '10:00:00',
+        hora_inicio: '08:00:00',
         hora_fim: '12:00:00',
         situacao: 'matriculado',
       },
@@ -232,15 +249,15 @@ describe('ComprovanteMatricula - Comprovante Oficial UNEB SAGRES', () => {
 
     // A faixa dinâmica 08:00 - 10:00 deve aparecer como linha na grade
     expect(screen.getByText('08:00 - 10:00')).toBeVisible();
-    // A faixa dinâmica 10:00 - 12:00 também deve aparecer
-    expect(screen.getByText('10:00 - 12:00')).toBeVisible();
+    // A faixa dinâmica 08:00 - 12:00 também deve aparecer
+    expect(screen.getByText('08:00 - 12:00')).toBeVisible();
 
     // Na tabela de grade, PROG1 e PROG1-A devem estar visíveis
     expect(screen.getAllByText('PROG1').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('PROG1-A').length).toBeGreaterThanOrEqual(1);
 
     // E a matéria de quarta-feira (BD01) também deve estar visível
-    expect(screen.getAllByText('BD01').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('BD01').length).toBe(2);
     expect(screen.getAllByText('BD01-A').length).toBeGreaterThanOrEqual(1);
   });
 });
