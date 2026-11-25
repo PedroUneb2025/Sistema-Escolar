@@ -4,6 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.core.limitador_login import limitador_login
 from app.core.security import hash_password
 from app.db.base import Base
 from app.db.session import get_db
@@ -17,6 +18,14 @@ engine = create_engine(
     poolclass=StaticPool,
 )
 TestingSessionLocal = sessionmaker(bind=engine, autoflush=False)
+
+
+@pytest.fixture(autouse=True)
+def _zerar_limitador_de_login():
+    """O limitador guarda contadores na memória; sem isto, um teste afetaria os outros."""
+    limitador_login.limpar()
+    yield
+    limitador_login.limpar()
 
 
 @pytest.fixture()

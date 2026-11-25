@@ -99,7 +99,7 @@ Leitura de currículo e pré-requisitos: qualquer usuário autenticado.
 
 | Rota | Quem | Descrição |
 |---|---|---|
-| `POST /auth/login` | todos | form-urlencoded (`username` = e-mail, `password`) → `access_token` |
+| `POST /auth/login` | todos | form-urlencoded (`username` = e-mail, `password`) → `access_token`. Depois de 5 falhas seguidas responde `429` com `Retry-After` (veja [Limite de tentativas de login](#limite-de-tentativas-de-login)) |
 | `GET /auth/me` | logado | `id_usuario`, `email`, `status`, `perfis` |
 | `GET/POST /cursos`, `GET/PUT/DELETE /cursos/{id}` | leitura: logado · escrita: SECRETARIA, COORDENACAO, ADMIN | cursos |
 | `GET/POST /disciplinas`, `GET/PUT/DELETE /disciplinas/{id}` | idem | disciplinas |
@@ -123,6 +123,56 @@ Leitura de currículo e pré-requisitos: qualquer usuário autenticado.
 
 Erros: `401` sem token ou token inválido · `403` sem permissão · `404` não encontrado · `409` conflito
 (duplicado, sem vaga, pré-requisito, horário) · `422` dados inválidos. A mensagem fica em `detail`.
+
+## Limite de tentativas de login
+
+A API fica exposta na internet, então `POST /auth/login` limita as tentativas de senha (`app/core/limitador_login.py`).
+
+**Regra**
+- As falhas seguidas são contadas **por e-mail e IP**. Um e-mail que não existe também conta, para a resposta não
+  revelar quais contas existem. Conta inativa também conta.
+- Da **5ª falha seguida** em diante, a pessoa espera **30 s, depois 1, 2, 4 e 8 min, com teto de 15 min**.
+- A 5ª falha já responde `429` (e não `401`). Durante a espera, **até a senha certa é recusada**, e a tentativa feita
+  na espera não conta nem aumenta o tempo.
+- **Login correto zera** o contador. Sem nenhuma tentativa por 1 hora depois do fim da espera, o contador também é esquecido.
+- Um usuário não afeta o outro, e o mesmo e-mail vindo de outro IP tem contador próprio.
+
+**Resposta**
+
+```
+HTTP/1.1 429 Too Many Requests
+Retry-After: 30
+{"detail": "Muitas tentativas. Tente de novo em 1 minuto"}
+```
+
+`Retry-After` vem em segundos. O front lê esse valor (a API o expõe no CORS), mostra o aviso na tela de login e
+desabilita o botão até acabar.
+
+**Limitações (de propósito, por ser em memória)**
+- Os contadores **zeram se a API reiniciar**.
+- Só funciona com **um processo** (um worker do uvicorn, como no `Dockerfile`). Com `--workers` maior que 1 ou mais de
+  uma instância, cada processo teria o seu contador, e aí seria preciso um armazenamento compartilhado (Redis).
+- O limite é por (e-mail, IP). Quem testa **uma senha em muitos e-mails** a partir do mesmo IP não é barrado, porque
+  cada e-mail tem o seu contador. Se isso virar problema, o próximo passo é um contador por IP com limite maior.
+
+**Qual IP a API enxerga (importante atrás de túnel ou proxy)**
+
+O contador usa `request.client.host`. Atrás de um túnel, esse valor só é o IP real da pessoa se o uvicorn confiar no
+proxy; senão **todos os usuários caem no mesmo IP e dividem o mesmo contador**. O uvicorn já lê o cabeçalho
+`X-Forwarded-For`, mas só quando a conexão vem de um IP confiável (por padrão, `127.0.0.1`, o caso do túnel rodando
+na mesma máquina). Se o proxy estiver em outro endereço (hospedagem, Docker), informe-o:
+
+```powershell
+uvicorn app.main:app --proxy-headers --forwarded-allow-ips="IP_DO_PROXY"
+# ou, no ambiente: FORWARDED_ALLOW_IPS=IP_DO_PROXY
+```
+
+Não use `*` se a API também puder ser acessada direto, sem passar pelo proxy: aí qualquer pessoa inventaria o
+cabeçalho para trocar de IP a cada tentativa. O código não lê `X-Forwarded-For` por conta própria, justamente por isso.
+
+Para conferir: erre a senha 5 vezes seguidas **de fora da rede, pelo endereço do túnel**, e olhe o log do uvicorn. A
+linha `login bloqueado: ip=...` mostra o IP que o contador usou. Se aparecer `127.0.0.1` (ou o IP do próprio túnel),
+a configuração acima está faltando.
 
 ## Decisões importantes
 

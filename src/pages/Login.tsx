@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
@@ -7,6 +7,7 @@ import { LoadingSpinner } from '../components/LoadingSpinner';
 import { useAuth } from '../hooks/useAuth';
 import { loginSchema } from '../schemas/authSchemas';
 import type { LoginFormData } from '../schemas/authSchemas';
+import { getRetryAfterSeconds } from '../services/apiError';
 import { DEMO_ENABLED, isDemoSession } from '../services/demoMode';
 import { getDefaultRoute } from '../routes/defaultRoute';
 
@@ -22,8 +23,16 @@ function Brand() {
   );
 }
 
+/** 75 -> "1:15" */
+function formatarEspera(segundos: number) {
+  return `${Math.floor(segundos / 60)}:${String(segundos % 60).padStart(2, '0')}`;
+}
+
 export function Login() {
   const [showPassword, setShowPassword] = useState(false);
+  // Espera imposta pela API depois de muitas tentativas erradas (HTTP 429).
+  const [bloqueadoAte, setBloqueadoAte] = useState<number | null>(null);
+  const [segundosRestantes, setSegundosRestantes] = useState(0);
   const { isAuthenticated, isLoading, login, loginDemo, loginDiretoAluno, loginDiretoDirecao, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -40,11 +49,27 @@ export function Login() {
     defaultValues: { email: '', password: '', remember: false },
   });
 
+  useEffect(() => {
+    if (bloqueadoAte === null) return;
+    const intervalo = window.setInterval(() => {
+      const restante = Math.max(0, Math.ceil((bloqueadoAte - Date.now()) / 1000));
+      setSegundosRestantes(restante);
+      if (restante === 0) {
+        setBloqueadoAte(null);
+        clearErrors('root');
+      }
+    }, 1000);
+    return () => window.clearInterval(intervalo);
+  }, [bloqueadoAte, clearErrors]);
+
   if (isAuthenticated && user) {
     return <Navigate to={isDemoSession() ? '/curriculo/cursos' : getDefaultRoute(user.perfis)} replace />;
   }
 
+  const emEspera = segundosRestantes > 0;
+
   const submitCredentials = handleSubmit(async (data) => {
+    if (emEspera) return;
     clearErrors('root');
 
     try {
@@ -56,6 +81,11 @@ export function Login() {
 
       navigate(requestedRoute ?? getDefaultRoute(loggedUser.perfis), { replace: true });
     } catch (error) {
+      const espera = getRetryAfterSeconds(error);
+      if (espera) {
+        setBloqueadoAte(Date.now() + espera * 1000);
+        setSegundosRestantes(espera);
+      }
       setError('root.server', {
         message: error instanceof Error ? error.message : 'Não foi possível realizar o login.',
       });
@@ -157,8 +187,10 @@ export function Login() {
               <span>Manter meu acesso neste dispositivo</span>
             </label>
 
-            <button className="primary-button" type="submit" disabled={isLoading}>
-              {isLoading ? <><LoadingSpinner label="Validando credenciais" /> Validando...</> : 'Continuar'}
+            <button className="primary-button" type="submit" disabled={isLoading || emEspera}>
+              {isLoading
+                ? <><LoadingSpinner label="Validando credenciais" /> Validando...</>
+                : emEspera ? `Aguarde ${formatarEspera(segundosRestantes)}` : 'Continuar'}
             </button>
           </form>
           {DEMO_ENABLED && <div className="demo-credentials" style={{ marginTop: '1.5rem', background: '#e0f2fe', border: '1px solid #bae6fd' }}>
