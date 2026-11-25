@@ -29,11 +29,10 @@ jobs:
       - run: npm test
       - run: npm run build
 
-  deploy:
+  preparar:
     needs: verificar
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      pacote: ${{ steps.pacote.outputs.nome }}
 
     runs-on: ubuntu-latest
 
@@ -61,11 +60,43 @@ jobs:
       - name: Configurar GitHub Pages
         uses: actions/configure-pages@v5
 
+      - name: Identificar pacote desta tentativa
+        id: pacote
+        run: echo "nome=github-pages-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
+
       - name: Enviar arquivos
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
+          name: ${{ steps.pacote.outputs.nome }}
+
+  deploy:
+    needs: preparar
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Aguardar o pacote no GitHub
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PACOTE: ${{ needs.preparar.outputs.pacote }}
+        run: |
+          for tentativa in {1..18}; do
+            if gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?name=$PACOTE" --jq '.artifacts[].name' | grep -Fxq "$PACOTE"; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::Pacote $PACOTE indisponível no GitHub após 90 segundos."
+          exit 1
 
       - name: Publicar
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: ${{ needs.preparar.outputs.pacote }}
