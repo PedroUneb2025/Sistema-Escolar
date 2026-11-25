@@ -108,6 +108,23 @@ describe('ComprovanteMatricula - Comprovante Oficial UNEB SAGRES', () => {
     expect(screen.queryByText('DISCIPLINA TRANCADA')).not.toBeInTheDocument();
   });
 
+  it.each(['API indisponível', 'matrícula vazia', 'nome vazio'])(
+    'impede a emissão quando o perfil não é confirmado: %s', async (caso) => {
+      const perfil = vi.spyOn(alunoService, 'obterMeuPerfil');
+      if (caso === 'API indisponível') perfil.mockRejectedValueOnce(new Error('offline'));
+      else perfil.mockResolvedValueOnce({
+        ...mockPerfilAluno,
+        [caso === 'nome vazio' ? 'nome_completo' : 'matricula']: ' ',
+      });
+      render(<MemoryRouter><ComprovanteMatricula /></MemoryRouter>);
+
+      expect(await screen.findByRole('alert')).toBeVisible();
+      expect(screen.queryByRole('article')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /imprimir/i })).not.toBeInTheDocument();
+      expect(screen.queryByText('2026100123')).not.toBeInTheDocument();
+    },
+  );
+
   it('GARANTE que o CPF NÃO aparece em nenhuma parte do comprovante ou da tela', async () => {
     vi.spyOn(alunoService, 'obterMeuPerfil').mockResolvedValueOnce(mockPerfilAluno);
     vi.spyOn(api, 'get').mockResolvedValueOnce({ data: mockMatriculas });

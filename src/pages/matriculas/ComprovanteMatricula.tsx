@@ -133,35 +133,22 @@ export function ComprovanteMatricula() {
 
   const selectSemestreId = useId();
 
-  // Hash de assinatura eletrônica institucional (fiel ao comprovante Sagres)
-  const assinaturaEletronica = useMemo(() => {
-    return `c8436815275d860ee03833f106da${(aluno?.id_aluno ?? 9473).toString().padStart(4, '0')}`;
-  }, [aluno?.id_aluno]);
-
   useEffect(() => {
     let ativo = true;
 
     async function carregarDados() {
       setLoading(true);
       setErro('');
+      setAluno(null);
 
       try {
-        let perfilAluno: Aluno | null = null;
-        try {
-          perfilAluno = await alunoService.obterMeuPerfil();
-        } catch {
-          const emailNome = user?.email ? user.email.split('@')[0] : 'Estudante Demonstração';
-          perfilAluno = {
-            id_aluno: Number(user?.id) || 1,
-            matricula: '2026100123',
-            nome_completo: user?.nome || emailNome.charAt(0).toUpperCase() + emailNome.slice(1),
-            email: user?.email,
-          };
+        const perfilAluno = await alunoService.obterMeuPerfil();
+        if (!ativo) return;
+        if (!Number.isInteger(perfilAluno?.id_aluno) || perfilAluno.id_aluno <= 0 ||
+            !perfilAluno.matricula?.trim() || !perfilAluno.nome_completo?.trim()) {
+          throw new Error('Cadastro de aluno incompleto.');
         }
-
-        if (ativo) {
-          setAluno(perfilAluno);
-        }
+        setAluno(perfilAluno);
 
         let listaTurmas: TurmaComprovante[] = [];
 
@@ -335,6 +322,17 @@ export function ComprovanteMatricula() {
     );
   }
 
+  if (erro || !aluno) {
+    return (
+      <div className="comprovante-wrapper">
+        <p className="comprovante-erro" role="alert">
+          {erro || 'Não foi possível confirmar os dados do aluno.'}
+        </p>
+        <Link to="/aluno/documentos" className="secondary-button">Voltar para Documentos</Link>
+      </div>
+    );
+  }
+
   return (
     <div className="comprovante-wrapper">
       {/* Barra de Ações (Ocultada na impressão via @media print) */}
@@ -371,12 +369,6 @@ export function ComprovanteMatricula() {
         </div>
       </div>
 
-      {erro && (
-        <div className="comprovante-erro no-print" role="alert">
-          {erro}
-        </div>
-      )}
-
       {/* DOCUMENTO OFICIAL A4 (Fiel ao modelo SAGRES da UNEB) */}
       <div className="sagres-documento-scroll-wrapper">
         <article className="sagres-folha-a4" aria-label="Comprovante de Matrícula Oficial UNEB">
@@ -411,11 +403,11 @@ export function ComprovanteMatricula() {
               <tr>
                 <td style={{ width: '18%' }}>
                   <span className="campo-label">Matrícula</span>
-                  <span className="campo-valor">{aluno?.matricula || '2026100123'}</span>
+                  <span className="campo-valor">{aluno.matricula}</span>
                 </td>
                 <td style={{ width: '44%' }}>
                   <span className="campo-label">Nome</span>
-                  <span className="campo-valor">{aluno?.nome_completo || 'Estudante Demonstração'}</span>
+                  <span className="campo-valor">{aluno.nome_completo}</span>
                 </td>
                 <td style={{ width: '12%' }}>
                   <span className="campo-label">Período</span>
@@ -569,7 +561,7 @@ export function ComprovanteMatricula() {
 
           <div className="sagres-autenticacao-bloco">
             <strong>Assinatura Eletrônica:</strong>
-            <code>{assinaturaEletronica}</code>
+            <code>{`c8436815275d860ee03833f106da${String(aluno.id_aluno).padStart(4, '0')}`}</code>
           </div>
         </footer>
       </article>
