@@ -106,9 +106,9 @@ export function ProfessoresList() {
   const getStatusBadge = (status: string | undefined) => {
     if (!status) return 'Não informado';
     if (status === 'ativo') {
-      return <span className="status-badge status-badge--success">Ativo</span>;
+      return <span className="status-badge status-badge--success badge-aprovado">Ativo</span>;
     }
-    return <span className="status-badge status-badge--danger">Inativo</span>;
+    return <span className="status-badge status-badge--danger badge-reprovado">Inativo</span>;
   };
 
   return (

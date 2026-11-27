@@ -116,17 +116,17 @@ export function ConsultaAcademica() {
       return <span className="badge-nota badge-nota--pendente">—</span>;
     }
     const classe =
-      nota >= 7 ? 'badge-nota--boa' : nota >= 5 ? 'badge-nota--media' : 'badge-nota--baixa';
+      nota >= 7 ? 'badge-nota--boa badge-aprovado' : nota >= 5 ? 'badge-nota--media badge-recuperacao' : 'badge-nota--baixa badge-reprovado';
     return <span className={`badge-nota ${classe}`}>{nota.toFixed(1)}</span>;
   };
 
   const renderBadgeStatus = (situacao: ItemConsultaAcademica['situacao']) => {
     const labels: Record<string, { label: string; classe: string }> = {
       matriculado: { label: 'Cursando', classe: 'badge-status--matriculado' },
-      aprovado: { label: 'Aprovado', classe: 'badge-status--aprovado' },
-      reprovado_nota: { label: 'Reprovado por Nota', classe: 'badge-status--reprovado' },
-      reprovado_falta: { label: 'Reprovado por Falta', classe: 'badge-status--reprovado' },
-      trancado: { label: 'Trancado', classe: 'badge-status--trancado' },
+      aprovado: { label: 'Aprovado', classe: 'badge-status--aprovado badge-aprovado' },
+      reprovado_nota: { label: 'Reprovado por Nota', classe: 'badge-status--reprovado badge-reprovado' },
+      reprovado_falta: { label: 'Reprovado por Falta', classe: 'badge-status--reprovado badge-reprovado' },
+      trancado: { label: 'Trancado', classe: 'badge-status--trancado badge-recuperacao' },
     };
     const config = labels[situacao] || { label: situacao, classe: 'badge-status--matriculado' };
     return <span className={`badge-status ${config.classe}`}>{config.label}</span>;
@@ -144,7 +144,7 @@ export function ConsultaAcademica() {
 
       {/* Cards de Métricas Gerais */}
       <section className="consulta-metricas" aria-label="Indicadores de desempenho acadêmico">
-        <article className="metrica-card">
+        <article className="metrica-card dashboard-card highlight">
           <div className="metrica-card__icone">
             <Icon name="book" size={24} />
           </div>
@@ -154,7 +154,7 @@ export function ConsultaAcademica() {
           </div>
         </article>
 
-        <article className="metrica-card">
+        <article className="metrica-card dashboard-card">
           <div className="metrica-card__icone">
             <Icon name="chart" size={24} />
           </div>
@@ -164,7 +164,7 @@ export function ConsultaAcademica() {
           </div>
         </article>
 
-        <article className="metrica-card">
+        <article className="metrica-card dashboard-card">
           <div className="metrica-card__icone">
             <Icon name="check" size={24} />
           </div>

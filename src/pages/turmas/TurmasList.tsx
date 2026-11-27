@@ -103,11 +103,11 @@ export function TurmasList() {
   const getStatusBadge = (status: Turma['status']) => {
     switch (status) {
       case 'aberta':
-        return <span className="status-badge status-badge--success">Aberta</span>;
+        return <span className="status-badge status-badge--success badge-aprovado">Aberta</span>;
       case 'fechada':
-        return <span className="status-badge status-badge--warning">Fechada</span>;
+        return <span className="status-badge status-badge--warning badge-recuperacao">Fechada</span>;
       case 'cancelada':
-        return <span className="status-badge status-badge--danger">Cancelada</span>;
+        return <span className="status-badge status-badge--danger badge-reprovado">Cancelada</span>;
       default:
         return <span className="status-badge">{status}</span>;
     }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { isDemoSession } from '../services/demoMode';
 import { Icon } from './Icon';
@@ -88,10 +88,13 @@ export function CoreLayout() {
         aria-label="Menu principal"
       >
         <div className="sidebar__top">
-          <div className="brand">
-            <span className="brand__mark" aria-hidden="true">U</span>
-            <span><strong>UNEB</strong><small>Campus II · Alagoinhas</small></span>
-          </div>
+          <Link to="/" className="brand" aria-label="Hive64" style={{ display: 'flex', alignItems: 'center' }}>
+            <img
+              src="/logo-hive64-horizontal.svg"
+              alt="Hive64"
+              style={{ height: '36px', width: 'auto', maxWidth: '175px', objectFit: 'contain' }}
+            />
+          </Link>
           <button
             className="sidebar__close"
             type="button"
@@ -110,7 +113,7 @@ export function CoreLayout() {
               to={item.to}
               end={item.end}
               onClick={() => setIsSidebarOpen(false)}
-              className={({ isActive }) => `sidebar-link ${isActive ? 'sidebar-link--active' : ''}`}
+              className={({ isActive }) => `sidebar-link ${isActive ? 'sidebar-link--active active' : ''}`}
             >
               <Icon name={item.icon} />
               <span>{item.label}</span>

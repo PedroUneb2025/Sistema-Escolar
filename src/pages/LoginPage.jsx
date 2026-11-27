@@ -9,9 +9,12 @@ import { loginSchema, mfaSchema } from "../schemas/authSchemas";
 
 function Brand() {
   return (
-    <div className="brand" aria-label="UNEB Campus II">
-      <span className="brand__mark" aria-hidden="true">U</span>
-      <span><strong>UNEB</strong><small>Campus II · Alagoinhas</small></span>
+    <div className="brand" aria-label="Hive64">
+      <img
+        src="/logo-hive64-horizontal.svg"
+        alt="Hive64"
+        style={{ height: '42px', width: 'auto', objectFit: 'contain' }}
+      />
     </div>
   );
 }

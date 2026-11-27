@@ -53,7 +53,7 @@ export function DashboardAluno() {
       <MiniCalendarioAulas />
 
       <section className="dashboard-grid" aria-label="Informações do semestre">
-        <article className="dashboard-card">
+        <article className="dashboard-card highlight">
           <div className="dashboard-card__heading">
             <div><span className="section-label">Progresso</span><h2>Conclusão do curso</h2></div><strong>72%</strong>
           </div>

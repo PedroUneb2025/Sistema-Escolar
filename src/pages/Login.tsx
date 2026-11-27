@@ -13,12 +13,12 @@ import { getDefaultRoute } from '../routes/defaultRoute';
 
 function Brand() {
   return (
-    <div className="brand" aria-label="UNEB Campus II">
-      <span className="brand__mark" aria-hidden="true">U</span>
-      <span>
-        <strong>UNEB</strong>
-        <small>Campus II · Alagoinhas</small>
-      </span>
+    <div className="brand" aria-label="Hive64">
+      <img
+        src="/logo-hive64-horizontal.svg"
+        alt="Hive64"
+        style={{ height: '42px', width: 'auto', objectFit: 'contain' }}
+      />
     </div>
   );
 }
@@ -102,18 +102,26 @@ export function Login() {
       <section className="login-hero" aria-labelledby="login-welcome-title">
         <Brand />
         <div className="login-hero__content">
-          <span className="eyebrow">Sistema acadêmico</span>
-          <h1 id="login-welcome-title">Sua jornada acadêmica, mais simples.</h1>
+          <span className="eyebrow">Hive64</span>
+          <h1 id="login-welcome-title">Gestão Acadêmica Estruturada.</h1>
           <p>
-            Acesse informações, serviços e documentos do Campus II em um ambiente seguro e
-            organizado.
+            Acesse informações, serviços e documentos acadêmicos em um ambiente seguro,
+            moderno e estruturado.
           </p>
         </div>
-        <p className="login-hero__footer">Universidade pública, inclusiva e transformadora.</p>
+        <p className="login-hero__footer">Hive64 — Plataforma de Gestão Acadêmica</p>
       </section>
 
       <section className="login-panel" aria-labelledby="login-form-title">
         <div className="login-card">
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.25rem' }}>
+            <img
+              src="/logo-hive64.png"
+              alt="Hive64"
+              style={{ maxHeight: '76px', width: 'auto', maxWidth: '100%', objectFit: 'contain' }}
+            />
+          </div>
+
           <div className="login-card__heading">
             <span className="section-label">Acesso institucional</span>
             <h2 id="login-form-title">Entre na sua conta</h2>

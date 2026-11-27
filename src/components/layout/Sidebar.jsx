@@ -15,14 +15,16 @@ export function Sidebar({ isOpen, onClose }) {
   return (
     <aside className={`sidebar ${isOpen ? "sidebar--open" : ""}`} id="app-sidebar" aria-label="Menu principal">
       <div className="sidebar__top">
-        <div className="brand"><span className="brand__mark" aria-hidden="true">U</span><span><strong>UNEB</strong><small>Campus II · Alagoinhas</small></span></div>
+        <div className="brand" aria-label="Hive64" style={{ display: 'flex', alignItems: 'center' }}>
+          <img src="/logo-hive64-horizontal.svg" alt="Hive64" style={{ height: '36px', width: 'auto', maxWidth: '175px' }} />
+        </div>
         <button className="sidebar__close" type="button" onClick={onClose} aria-label="Fechar menu"><Icon name="close" /></button>
       </div>
 
       <nav className="sidebar__nav" aria-label="Navegação acadêmica">
         <span className="sidebar__label">Menu acadêmico</span>
         {navigation.map((item) => (
-          <NavLink key={item.to} to={item.to} end={item.end} onClick={onClose} className={({ isActive }) => `sidebar-link ${isActive ? "sidebar-link--active" : ""}`}>
+          <NavLink key={item.to} to={item.to} end={item.end} onClick={onClose} className={({ isActive }) => `sidebar-link ${isActive ? "sidebar-link--active active" : ""}`}>
             <Icon name={item.icon} /><span>{item.label}</span>
           </NavLink>
         ))}

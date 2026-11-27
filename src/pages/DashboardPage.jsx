@@ -25,7 +25,7 @@ export function DashboardPage() {
       </section>
 
       <section className="dashboard-grid" aria-label="Informações do semestre">
-        <article className="dashboard-card"><div className="dashboard-card__heading"><div><span className="section-label">Progresso</span><h2>Conclusão do curso</h2></div><strong>72%</strong></div><div className="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="72" aria-label="Conclusão do curso"><span></span></div><p>Você está avançando muito bem. Continue assim!</p></article>
+        <article className="dashboard-card highlight"><div className="dashboard-card__heading"><div><span className="section-label">Progresso</span><h2>Conclusão do curso</h2></div><strong>72%</strong></div><div className="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="72" aria-label="Conclusão do curso"><span></span></div><p>Você está avançando muito bem. Continue assim!</p></article>
         <article className="dashboard-card"><span className="section-label">Próximo compromisso</span><h2>Calendário acadêmico</h2><div className="calendar-event"><time dateTime="2026-09-22"><strong>22</strong><span>SET</span></time><div><strong>Ajuste de matrícula</strong><p>Último dia para solicitação.</p></div></div></article>
       </section>
     </div>

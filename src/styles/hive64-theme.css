@@ -1,0 +1,265 @@
+/* ==========================================================================
+   HIVE64 — TEMA VIBRANTE (Amarelo Colmeia + Âmbar + Grafite Alto Contraste)
+   ========================================================================== */
+
+:root {
+  /* Paleta Principal */
+  --hive-yellow: #FACC15;        /* Amarelo vibrante (destaque principal) */
+  --hive-yellow-hover: #EAB308;  /* Amarelo intenso no hover */
+  --hive-amber: #D97706;         /* Âmbar mel (apoio, bordas de foco, detalhes) */
+  --hive-dark: #18181B;          /* Grafite fosco (sidebar, cabeçalhos, textos sobre amarelo) */
+  --hive-dark-elevated: #27272A; /* Grafite secundário (hover na sidebar) */
+  
+  /* Superfícies e Textos */
+  --hive-bg: #F4F4F5;            /* Fundo geral da aplicação */
+  --hive-surface: #FFFFFF;       /* Fundo de cards e tabelas */
+  --hive-text: #18181B;          /* Texto principal */
+  --hive-text-muted: #52525B;    /* Texto secundário */
+  --hive-border: #18181B;        /* Borda marcada estilo Neo-SaaS */
+  --hive-border-subtle: #E4E4E7; /* Divisórias internas de tabela */
+
+  /* Semântica Acadêmica (Notas e Frequência) */
+  --hive-success: #10B981;       /* Aprovado / Presença */
+  --hive-warning: #F97316;       /* Recuperação / Alerta de faltas */
+  --hive-danger: #EF4444;        /* Reprovado / Falta */
+
+  /* Tipografia */
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+}
+
+/* Reset e Base */
+body {
+  background-color: var(--hive-bg);
+  color: var(--hive-text);
+  font-family: var(--font-sans);
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, .brand-title {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+/* --------------------------------------------------------------------------
+   SIDEBAR / NAVEGAÇÃO LATERAL
+   -------------------------------------------------------------------------- */
+aside, .sidebar, nav.sidebar {
+  background-color: var(--hive-dark) !important;
+  color: #FAFAFA !important;
+  border-right: 3px solid var(--hive-yellow);
+}
+
+aside a, .sidebar a, .nav-item {
+  color: #D4D4D8;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+aside a:hover, .sidebar a:hover, .nav-item:hover {
+  background-color: var(--hive-dark-elevated);
+  color: var(--hive-yellow);
+}
+
+/* Item de menu ativo em Amarelo Vibrante com texto Grafite */
+aside a.active, .sidebar a.active, .sidebar-link.active, .sidebar-link--active, .nav-item.active, [aria-current="page"] {
+  background-color: var(--hive-yellow) !important;
+  color: var(--hive-dark) !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 0 #D97706;
+}
+
+/* Regra de Contraste: Texto e ícones sobre amarelo devem ser SEMPRE grafite */
+aside a.active *, .sidebar a.active *, .sidebar-link.active *, .sidebar-link--active *, [aria-current="page"] * {
+  color: var(--hive-dark) !important;
+  stroke: var(--hive-dark) !important;
+  fill: none;
+}
+
+aside a.active svg, .sidebar a.active svg, .sidebar-link.active svg, .sidebar-link--active svg {
+  color: var(--hive-dark) !important;
+  stroke: var(--hive-dark) !important;
+}
+
+/* --------------------------------------------------------------------------
+   BOTÕES CHAMATIVOS (Alto Contraste)
+   -------------------------------------------------------------------------- */
+button[type="submit"],
+.btn-primary,
+button.primary {
+  background-color: var(--hive-yellow) !important;
+  color: var(--hive-dark) !important;
+  border: 2px solid var(--hive-dark) !important;
+  font-family: var(--font-display);
+  font-weight: 700 !important;
+  border-radius: 8px;
+  padding: 0.6rem 1.25rem;
+  cursor: pointer;
+  box-shadow: 3px 3px 0px var(--hive-dark);
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.15s ease;
+}
+
+button[type="submit"]:hover,
+.btn-primary:hover,
+button.primary:hover {
+  background-color: var(--hive-yellow-hover) !important;
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px var(--hive-dark);
+}
+
+button[type="submit"]:active,
+.btn-primary:active,
+button.primary:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px var(--hive-dark);
+}
+
+.btn-secondary {
+  background-color: var(--hive-dark) !important;
+  color: var(--hive-yellow) !important;
+  border: 2px solid var(--hive-dark) !important;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+/* --------------------------------------------------------------------------
+   CARDS E PAINÉIS (Dashboard)
+   -------------------------------------------------------------------------- */
+.card, .panel, .dashboard-card {
+  background-color: var(--hive-surface);
+  border: 2px solid var(--hive-dark);
+  border-radius: 12px;
+  box-shadow: 4px 4px 0px rgba(24, 24, 27, 0.12);
+}
+
+/* Destaque vibrante para o primeiro card de KPI */
+.dashboard-card.highlight, .kpi-primary {
+  background-color: var(--hive-yellow) !important;
+  color: var(--hive-dark) !important;
+  box-shadow: 4px 4px 0px var(--hive-dark);
+}
+
+.dashboard-card.highlight *, .kpi-primary * {
+  color: var(--hive-dark) !important;
+}
+
+.dashboard-card.highlight .section-label, .kpi-primary .section-label {
+  color: #78350F !important;
+}
+
+/* --------------------------------------------------------------------------
+   TABELAS DE NOTAS, FREQUÊNCIA E MATRÍCULAS
+   -------------------------------------------------------------------------- */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: var(--hive-surface);
+  border: 2px solid var(--hive-dark);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+thead {
+  background-color: var(--hive-dark) !important;
+  color: #FAFAFA !important;
+  border-bottom: 3px solid var(--hive-yellow);
+}
+
+thead th {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  padding: 0.85rem 1rem;
+  text-align: left;
+}
+
+tbody tr {
+  border-bottom: 1px solid var(--hive-border-subtle);
+  transition: background-color 0.12s ease;
+}
+
+tbody tr:hover {
+  background-color: #FEF9C3; /* Amarelo bem suave ao passar o mouse na linha */
+}
+
+tbody td {
+  padding: 0.75rem 1rem;
+  font-size: 0.92rem;
+}
+
+/* --------------------------------------------------------------------------
+   INPUTS E FORMULÁRIOS
+   -------------------------------------------------------------------------- */
+input, select, textarea {
+  background-color: #FFFFFF;
+  border: 2px solid #D4D4D8;
+  border-radius: 8px;
+  padding: 0.55rem 0.85rem;
+  font-family: var(--font-sans);
+  color: var(--hive-dark);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--hive-dark);
+  box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.55); /* Brilho amarelo no foco */
+}
+
+/* --------------------------------------------------------------------------
+   BADGES DE STATUS ACADÊMICO
+   -------------------------------------------------------------------------- */
+.badge-aprovado, .status-approved {
+  background-color: #D1FAE5;
+  color: #065F46;
+  border: 1.5px solid var(--hive-success);
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+}
+
+.badge-recuperacao, .status-warning {
+  background-color: #FFEDD5;
+  color: #9A3412;
+  border: 1.5px solid var(--hive-warning);
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+}
+
+.badge-reprovado, .status-failed {
+  background-color: #FEE2E2;
+  color: #991B1B;
+  border: 1.5px solid var(--hive-danger);
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+}
+
+/* --------------------------------------------------------------------------
+   TELA DE LOGIN (Fundo Geométrico Vibrante)
+   -------------------------------------------------------------------------- */
+.login-page, .auth-container {
+  min-height: 100vh;
+  background-color: var(--hive-yellow);
+  background-image: radial-gradient(var(--hive-dark) 1px, transparent 1px);
+  background-size: 24px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-card, .auth-box {
+  background-color: #FFFFFF;
+  border: 3px solid var(--hive-dark);
+  border-radius: 16px;
+  box-shadow: 8px 8px 0px var(--hive-dark);
+  padding: 2.5rem;
+}

@@ -1,6 +1,6 @@
-# Sistema Acadêmico — UNEB Campus II
+# <img src="public/logo-hive64-horizontal.svg" alt="Hive64" height="48" valign="middle" /> Hive64 — Gestão Acadêmica Estruturada
 
-Projeto React e TypeScript que reúne a interface do sistema acadêmico com a arquitetura base de autenticação, roteamento e controle de acesso por perfil.
+O **Hive64** é uma plataforma moderna e estruturada de gestão acadêmica (Web II), desenvolvida em React e TypeScript, que reúne autenticação segura, controle de acesso por perfil, matrículas online, consulta acadêmica e quadro dinâmico de horários.
 
 ## O que foi implementado
 
